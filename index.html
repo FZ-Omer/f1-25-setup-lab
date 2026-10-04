@@ -173,8 +173,11 @@ body.no3d svg.car{display:block}body.no3d .hint3d{display:none}
 .val{font:700 16px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
 .tag{justify-self:end}
 .rowp.changed .val{color:var(--amber)}.rowp.tuned .val{color:var(--green)}
+.rowp{cursor:pointer}.rowp .why{grid-column:1/-1;display:none;font-size:13px;color:var(--mute);line-height:1.45;padding:6px 0 2px;border-top:1px dashed var(--line)}
+.rowp.open .why{display:block;animation:rise .4s var(--ease) both}.rowp .why b{color:var(--amber);font-family:var(--mono)}
 @media (max-width:560px){
-  .rowp{grid-template-columns:1fr 70px 56px;grid-template-areas:"n v t" "b b b";row-gap:6px}
+  .rowp{grid-template-columns:1fr 70px 56px;grid-template-areas:"n v t" "b b b" "w w w";row-gap:6px}
+  .rowp .why{grid-area:w}
   .rowp .n{grid-area:n}.rowp .bar{grid-area:b}.rowp .val{grid-area:v}.rowp .tag{grid-area:t}
 }
 .notes{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
@@ -263,7 +266,7 @@ footer{position:relative;z-index:2;padding:28px 0 90px;color:var(--mute);font-si
   <section id="lab">
     <div class="wrap title">
       <h2 class="split">The Lab</h2>
-      <p data-reveal>Pick a track and conditions. Hover any setting to light up the part it changes on the car.</p>
+      <p data-reveal>Pick a track and conditions. Hover or tap any setting to light up its part on the car — tap shows why it changed (R1–R5 = rule codes).</p>
     </div>
     <nav class="controls" aria-label="Setup selector">
       <div class="wrap">
@@ -298,7 +301,7 @@ footer{position:relative;z-index:2;padding:28px 0 90px;color:var(--mute);font-si
           <text class="lbl" x="6" y="98" id="lFL"></text><text class="lbl" x="314" y="98" text-anchor="end" id="lFR"></text>
           <text class="lbl" x="6" y="446" id="lRL"></text><text class="lbl" x="314" y="446" text-anchor="end" id="lRR"></text>
         </svg>
-        <div class="legend"><span><i style="background:#fff;opacity:.6"></i>published base</span><span><i style="background:var(--amber)"></i>derived</span><span><i style="background:var(--green)"></i>tuned by feedback</span></div>
+        <div class="legend"><span><i style="background:#fff;opacity:.6"></i>published base</span><span><i style="background:var(--amber)"></i>derived</span><span><i style="background:var(--green)"></i>tuned by feedback</span><span>R1–R5 = rule that changed it · tap a row</span></div>
       </aside>
       <div class="glass sheet">
         <div class="head"><div><h3>Setup sheet</h3><div class="sub" id="sheetSub"></div></div><div class="chips" id="sheetChips"></div></div>

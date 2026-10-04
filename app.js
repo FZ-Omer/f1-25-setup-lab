@@ -54,7 +54,9 @@ function buildControls(){
   $('#symp').onchange = () => { sfx.tick(); $('#fbSend').disabled = !document.querySelector('#symp input:checked'); };
   $('#rules').innerHTML = Object.entries(RULES).map(([c, t]) => `<li><code>${c}</code> ${t}</li>`).join('');
   $('#groups').innerHTML = GROUPS.map(([g, keys]) => `<div class="group"><h4>${g}</h4>${keys.map(k =>
-    `<div class="rowp" tabindex="0" data-k="${k}"><div class="n">${LABEL[k][0]}<small>${LABEL[k][1]}</small></div><div class="bar"><div class="fill"></div><div class="base"></div></div><div class="val">–</div><div class="tag"></div></div>`).join('')}</div>`).join('');
+    `<div class="rowp" tabindex="0" data-k="${k}"><div class="n">${LABEL[k][0]}<small>${LABEL[k][1]}</small></div><div class="bar"><div class="fill"></div><div class="base"></div></div><div class="val">–</div><div class="tag"></div><div class="why"></div></div>`).join('')}</div>`).join('');
+  // phones can't hover: tap a row to read why it differs from the published base
+  $('#groups').addEventListener('click', e => { const r = e.target.closest('.rowp'); if (r) r.classList.toggle('open'); });
   const hot = k => {
     document.querySelectorAll('.car .hot').forEach(z => z.classList.remove('hot'));
     if (k) document.getElementById(ZONE[k]).classList.add('hot');
@@ -113,6 +115,7 @@ function update(){
     row.classList.toggle('tuned', why.includes('TUNED'));
     row.querySelector('.tag').innerHTML = why.map(w => `<span class="chip ${w === 'TUNED' ? 'green' : 'amber'}" title="${esc(RULES[w])}">${w}</span>`).join(' ');
     row.title = why.length ? `Base ${fmt(k, r.base[k])} → ${fmt(k, v[k])}. ` + why.map(w => RULES[w]).join(' ') : 'Published base value';
+    row.querySelector('.why').innerHTML = why.length ? `Base ${fmt(k, r.base[k])} → ${fmt(k, v[k])}<br>` + why.map(w => `<b>${w}</b> ${esc(RULES[w])}`).join('<br>') : 'Published base value — unchanged.';
   });
   shown = { ...v };
   // 2D fallback labels + tyre heat
