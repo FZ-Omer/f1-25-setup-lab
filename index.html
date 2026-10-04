@@ -90,7 +90,7 @@ main,header,footer,.marquee{position:relative;z-index:2}
 @keyframes cue{from{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}to{transform:scaleY(0);transform-origin:bottom}}
 
 /* word reveals */
-.split .w{display:inline-block;overflow:hidden;vertical-align:bottom}
+.split .w{display:inline-block;overflow:hidden;vertical-align:bottom;padding:0 .16em .06em .06em;margin:0 -.16em -.06em -.06em} /* room for italic overhang */
 .split .w>span{display:inline-block;transform:translateY(105%);transition:transform 1s var(--ease);transition-delay:calc(var(--i) * 70ms)}
 .split.in .w>span{transform:none}
 [data-reveal]{opacity:0;transform:translateY(34px);filter:blur(8px);transition:opacity 1s var(--ease),transform 1s var(--ease),filter 1s var(--ease)}
@@ -115,6 +115,12 @@ main,header,footer,.marquee{position:relative;z-index:2}
 .tracks button:hover{transform:translateY(-2px)}
 .tracks button em{font:700 10px var(--mono);font-style:normal;color:var(--accent);letter-spacing:.1em;display:block}
 .tracks button small{display:block;color:var(--mute);font-size:11px;line-height:1.2}
+.tracks svg.mini{display:block;width:64px;height:36px;margin-top:5px;fill:none;stroke:var(--mute);stroke-width:1.6;stroke-linejoin:round;transition:stroke .3s}
+.tracks button[aria-pressed=true] svg.mini,.tracks button:hover svg.mini{stroke:var(--accent)}
+#tmap{display:block;width:100%;max-width:200px;height:auto;margin:6px 0 2px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round;filter:drop-shadow(0 0 6px var(--accent))}
+#tmap.draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:drawmap 2.4s var(--ease) forwards}
+@keyframes drawmap{to{stroke-dashoffset:0}}
+.tlen{font:600 11px var(--mono);color:var(--mute);letter-spacing:.08em}
 .tracks button::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
 .tracks button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 24px color-mix(in srgb,var(--accent) 25%,transparent)}
 .tracks button[aria-pressed=true]::after{transform:scaleX(1)}
@@ -283,6 +289,7 @@ footer{position:relative;z-index:2;padding:28px 0 90px;color:var(--mute);font-si
       <aside class="carpanel" id="carpanel">
         <h3 id="tName">—</h3>
         <div class="circ" id="tCirc"></div>
+        <svg id="tmap" viewBox="0 0 160 90" aria-hidden="true"><path pathLength="1"/></svg><div class="tlen" id="tLen"></div>
         <div class="chips" id="carChips"></div>
         <p class="hint3d">LIVE 3D · ride height &amp; tyre heat follow the setup</p>
         <svg class="car" viewBox="0 0 320 500" role="img" aria-label="Top-down car diagram; highlights the part each setting changes">
@@ -361,6 +368,7 @@ footer{position:relative;z-index:2;padding:28px 0 90px;color:var(--mute);font-si
           <div><b>3D car</b><a href="https://sketchfab.com/3d-models/f1-2026-concept-polygon-model-ea3bde709b1e4dc9b0ec8557d106ed42">"F1 2026 concept (polygon model)"</a> by Qvist_Designs — <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Simplified, split into parts and repainted for this site. No team design or logos.</div>
           <div><b>Sound</b>Real F1 engines recorded by fans at real Grands Prix (CC BY 4.0, credited below) and CC0 radio static. Light beeps and clicks are synthesised. No broadcast or team-radio audio, no voices.</div>
           <div><b>Type</b>Titillium Web &amp; JetBrains Mono — SIL Open Font Licence 1.1, via Google Fonts.</div>
+          <div><b>Circuits</b>Real track layouts from <a href="https://github.com/bacinger/f1-circuits">f1-circuits</a> by Tomislav Bacinger — MIT licence (copy in <code>tracks/</code>). Drawn by the site; no official track maps or game images.</div>
           <div><b>Imagery</b>No photos, logos, signatures or quotes of any real person or team are used.</div>
         </div>
         <p style="margin-top:16px"><b>Audio credits</b> — all trimmed, loudness-normalised and re-encoded to MP3 for this site:<br>

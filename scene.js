@@ -12,14 +12,14 @@ const ZONE_OF = { fw:'fw', rw:'rw', don:'diff', doff:'diff', fc:'fsus', ft:'fsus
   rc:'rsus', rt:'rsus', rs:'rsus', rarb:'rsus', rrh:'rsus', bb:'brk', bp:'brk', tfl:'tfl', tfr:'tfr', trl:'trl', trr:'trr' };
 
 export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance', logarithmicDepthBuffer: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 1.75));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
 
   const scene = new THREE.Scene();
   const BG = new THREE.Color('#07080b');
-  scene.background = BG; scene.fog = new THREE.Fog(BG, 14, 42);
+  scene.background = BG; scene.fog = new THREE.Fog(BG, 20, 140);
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environmentIntensity = 0.55;
@@ -36,8 +36,8 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
     g.strokeStyle = 'rgba(255,255,255,.07)'; g.lineWidth = 2;
     for (let i = 0; i <= 512; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, 512); g.moveTo(0, i); g.lineTo(512, i); g.stroke(); }
   });
-  gridTex.wrapS = gridTex.wrapT = THREE.RepeatWrapping; gridTex.repeat.set(30, 30);
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(90, 90).rotateX(-Math.PI / 2),
+  gridTex.wrapS = gridTex.wrapT = THREE.RepeatWrapping; gridTex.repeat.set(190, 190);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(9000, 9000).rotateX(-Math.PI / 2),
     new THREE.MeshStandardMaterial({ map: gridTex, roughness: 0.85, metalness: 0, envMapIntensity: 0.1 }));
   scene.add(ground);
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 6.4).rotateX(-Math.PI / 2),
@@ -58,6 +58,54 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
     const real = buildFromModel(g.scene, car);
     scene.remove(car.root); car = real; scene.add(car.root); car.drawDecals();
   }).catch(e => console.warn('car model failed, keeping the simple car', e));
+
+  // ---------- real circuit under the car (layouts: bacinger/f1-circuits, MIT) ----------
+  const trackGroup = new THREE.Group(); scene.add(trackGroup);
+  const asphalt = new THREE.MeshStandardMaterial({ color: 0x18191d, roughness: 0.92, metalness: 0, envMapIntensity: 0.35, side: THREE.DoubleSide });
+  const paintLine = new THREE.MeshStandardMaterial({ color: 0xb8bac0, roughness: 0.7, side: THREE.DoubleSide });
+  const kerbMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  const trailMat = new THREE.MeshBasicMaterial({ color: TEAL, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+  scene.add(dot);
+  let trail = null, trailQuads = 0, path = [], tCenter = new THREE.Vector3(), tRadius = 800, ov = 0, ovT0 = -1e9;
+
+  function setTrack(pts, reverse, animate) {
+    trackGroup.traverse(o => o.geometry?.dispose()); trackGroup.clear();
+    const P = pts.map(([x, y]) => new THREE.Vector3(x, 0, -y)); if (reverse) P.reverse();
+    const curve = new THREE.CatmullRomCurve3(P, true, 'centripetal');
+    const N = Math.max(400, Math.round(curve.getLength() / 2));
+    const S = curve.getSpacedPoints(N); S.pop();
+    // move the lap start under the car and point it along +Z (the car's nose)
+    const p0 = S[0].clone(), t0 = S[1].clone().sub(S[0]), th = -Math.atan2(t0.x, t0.z), c = Math.cos(th), sn = Math.sin(th);
+    for (const p of S) { const x = p.x - p0.x, z = p.z - p0.z; p.set(x * c + z * sn, 0, -x * sn + z * c); }
+    const n = S.length, T = S.map((_, i) => S[(i + 1) % n].clone().sub(S[(i - 1 + n) % n]).normalize());
+    const side = T.map(t => new THREE.Vector3(t.z, 0, -t.x));
+    const bend = T.map((_, i) => T[(i - 3 + n) % n].angleTo(T[(i + 3) % n]) / 12);      // rad per metre
+    const strip = (o0, o1, y, keep, colour) => {
+      const pos = [], col = [];
+      for (let i = 0; i < n; i++) {
+        if (keep && !keep(i)) continue;
+        const j = (i + 1) % n, q = [[i, o0], [i, o1], [j, o1], [i, o0], [j, o1], [j, o0]];
+        for (const [k, o] of q) { const v = S[k].clone().addScaledVector(side[k], o); pos.push(v.x, y, v.z); }
+        if (colour) { const cc = colour(i); for (let r = 0; r < 6; r++) col.push(...cc); }
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(new Float32Array(pos.length).map((_, i) => i % 3 === 1 ? 1 : 0), 3));
+      if (colour) g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+      return g;
+    };
+    const hw = 6.5, isBend = i => bend[i] > 1 / 140;
+    trackGroup.add(new THREE.Mesh(strip(-hw, hw, 0.006), asphalt));
+    for (const sx of [-1, 1]) {
+      trackGroup.add(new THREE.Mesh(strip(sx * (hw - 0.45), sx * (hw - 0.2), 0.01), paintLine));
+      trackGroup.add(new THREE.Mesh(strip(sx * hw, sx * (hw + 1.4), 0.012, isBend, i => i % 2 ? [0.82, 0.08, 0.08] : [0.92, 0.92, 0.92]), kerbMat));
+    }
+    trackGroup.add(box(2 * hw, 0.01, 0.5, 0, 0.012, 3.6, paintLine));                                   // start line
+    trail = new THREE.Mesh(strip(-11, 11, 0.06), trailMat); trail.geometry.setDrawRange(0, 0); trailQuads = n; trackGroup.add(trail);
+    const box3 = new THREE.Box3().setFromPoints(S); box3.getCenter(tCenter); tCenter.y = 0;
+    const sz = box3.getSize(new THREE.Vector3()); tRadius = Math.max(sz.x, sz.z) / 2;
+    path = S; if (animate && !reduce) ovT0 = performance.now() / 1000;
+  }
 
   // ---------- airflow streaks + rain ----------
   const NS = mobile ? 130 : 260, streakPos = new Float32Array(NS * 6), streakSeed = [];
@@ -108,16 +156,28 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
     for (const f of ['el', 'az', 'dist', 'cx', 'cy']) target[f] = mix(mix(hero[f], lab[f], a), out[f], b);
     cam = cam || { ...target };
     for (const f in target) cam[f] += (target[f] - cam[f]) * k;
-    const el = rad(cam.el), az = rad(cam.az), tgt = new THREE.Vector3(0, 0.45, 0.25);
-    camera.position.set(tgt.x + cam.dist * Math.cos(el) * Math.sin(az), tgt.y + cam.dist * Math.sin(el), tgt.z + cam.dist * Math.cos(el) * Math.cos(az));
+    // track overview: on a track change the camera climbs to show the whole circuit, draws the lap, then dives back
+    const tO = now / 1000 - ovT0, ovRaw = tO < 0 ? 0 : tO < 1 ? tO : tO < 3.2 ? 1 : Math.max(0, 1 - (tO - 3.2) / 1.1);
+    ov = e(ovRaw);
+    const ovDist = tRadius * 1.2 / (tan * Math.min(1, W / H)) / Math.sin(rad(64));
+    const dist = cam.dist * Math.pow(ovDist / cam.dist, ov);
+    const el = rad(mix(cam.el, 64, ov)), az = rad(cam.az), tgt = new THREE.Vector3(0, 0.45, 0.25).lerp(tCenter, ov);
+    camera.position.set(tgt.x + dist * Math.cos(el) * Math.sin(az), tgt.y + dist * Math.sin(el), tgt.z + dist * Math.cos(el) * Math.cos(az));
     camera.lookAt(tgt);
-    camera.setViewOffset(W, H, W / 2 - cam.cx, H / 2 - cam.cy, W, H);
+    camera.near = Math.max(0.1, dist * 0.01); camera.far = dist * 6 + 400;
+    camera.setViewOffset(W, H, W / 2 - mix(cam.cx, W / 2, ov), H / 2 - mix(cam.cy, H / 2, ov), W, H);
     camera.updateProjectionMatrix();
+    scene.fog.near = 20 + ov * dist * 3; scene.fog.far = 140 + ov * dist * 6;
+    if (trail) {
+      const q = Math.min(1, Math.max(0, (tO - 0.6) / 2.2)), at = Math.min(path.length - 1, Math.floor(q * path.length));
+      trail.geometry.setDrawRange(0, 6 * Math.floor(q * trailQuads)); trailMat.opacity = ov * 0.85; trailMat.color.copy(accent);
+      dot.position.copy(path[at]).setY(8); dot.scale.setScalar(Math.max(10, dist * 0.012)); dot.material.opacity = ov;
+    }
 
     // billboard "44"
     const dir = tgt.clone().sub(camera.position).setY(0).normalize();
     big.position.copy(tgt).addScaledVector(dir, 7).setY(2.1); big.quaternion.copy(camera.quaternion);
-    big.material.opacity = (1 - a) * (1 - b) * 0.9;
+    big.material.opacity = (1 - a) * (1 - b) * (1 - ov) * 0.9;
 
     // setup-driven parts
     for (const f of ['fw', 'rw', 'lift', 'rake']) S[f] += (T[f] - S[f]) * k;
@@ -152,13 +212,14 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
     wet += (wetT - wet) * (reduce ? 1 : 0.05);
     rainMat.opacity = wet * 0.55 * (1 - a * 0.6); streakMat.opacity = 0.05 + (1 - a) * 0.45;
     ground.material.roughness = 0.85 - wet * 0.4;
+    asphalt.roughness = 0.92 - wet * 0.62; asphalt.metalness = wet * 0.25;     // wet tarmac shines
 
     renderer.render(scene, camera);
 
     if (onFrame) {
       const proj = o => { const q = o.getWorldPosition(new THREE.Vector3()).project(camera); return [(q.x + 1) / 2 * W, (1 - q.y) / 2 * H]; };
       onFrame({ tfl: proj(car.anchors.tfl), tfr: proj(car.anchors.tfr), trl: proj(car.anchors.trl), trr: proj(car.anchors.trr),
-                fw: proj(car.anchors.fw), rw: proj(car.anchors.rw), lab: a * (1 - b) });
+                fw: proj(car.anchors.fw), rw: proj(car.anchors.rw), lab: a * (1 - b) * (1 - ov) });
     }
   }
   requestAnimationFrame(frame);
@@ -180,6 +241,7 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
     highlight(k) { hot = k ? ZONE_OF[k] : null; },
     setWeather(w) { wetT = w === 'wet' ? 1 : 0; },
     setCareer(p) { career = p; },
+    setTrack,
   };
 }
 

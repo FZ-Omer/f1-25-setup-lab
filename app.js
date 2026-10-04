@@ -25,7 +25,7 @@ const SYMPTOMS = ['Understeer – entry','Understeer – mid-corner','Understeer
   'Wheelspin / snap on throttle','Front lock-ups','Rear lock-ups','Unstable over kerbs','Bottoming / sparks','Slow on straights',
   'Front tyre wear high','Rear tyre wear high','Uneven left/right wear','Tyres overheating'];
 
-let data, scene = null, state = { track:'australia', weather:'dry', session:'quali', length:'full', input:'wheel' }, shown = {};
+let data, TR = {}, lastTrack = null, scene = null, state = { track:'australia', weather:'dry', session:'quali', length:'full', input:'wheel' }, shown = {};
 const fmt = (k, x) => x.toFixed(RANGE[k][2]);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 
@@ -39,7 +39,7 @@ const writeHash = () => history.replaceState(null, '', `#${state.track}/${state.
 
 // ---------------- UI build ----------------
 function buildControls(){
-  $('#tracks').innerHTML = data.tracks.map((t, i) => `<button type="button" data-id="${t.id}" aria-pressed="false"><em>${t.baseOf ? 'REV' : 'R' + String(data.tracks.filter((x, j) => j <= i && !x.baseOf).length).padStart(2, '0')}</em>${t.name}<small>${t.circuit}</small></button>`).join('');
+  $('#tracks').innerHTML = data.tracks.map((t, i) => `<button type="button" data-id="${t.id}" aria-pressed="false"><em>${t.baseOf ? 'REV' : 'R' + String(data.tracks.filter((x, j) => j <= i && !x.baseOf).length).padStart(2, '0')}</em>${t.name}<small>${t.circuit}</small><svg class="mini" viewBox="0 0 100 56" aria-hidden="true"><path d="${mapPath(t.baseOf || t.id, 100, 56, 4)}"/></svg></button>`).join('');
   $('#tracks').onclick = e => { const b = e.target.closest('button'); if (b && b.dataset.id !== state.track) { state.track = b.dataset.id; sfx.passby(1.1, 0.6); update(); radioMsg(`Copy. ${b.firstChild.nextSibling.textContent} setup loaded.`); } };
   for (const key of Object.keys(OPTS)) {
     const fs = $(`#${key}Seg`);
@@ -66,6 +66,15 @@ function buildControls(){
   $('#groups').addEventListener('focusin', e => hot(e.target.closest('.rowp')?.dataset.k));
   $('#groups').addEventListener('pointerleave', () => hot());
   $('#groups').addEventListener('focusout', () => hot());
+}
+
+// SVG outline of a circuit, fitted into a w×h box (north up)
+function mapPath(id, w, h, pad){
+  const p = TR[id]?.pts; if (!p) return '';
+  const xs = p.map(q => q[0]), ys = p.map(q => q[1]), x0 = Math.min(...xs), y1 = Math.max(...ys);
+  const sc = Math.min((w - 2 * pad) / (Math.max(...xs) - x0), (h - 2 * pad) / (y1 - Math.min(...ys)));
+  const ox = (w - (Math.max(...xs) - x0) * sc) / 2, oy = (h - (y1 - Math.min(...ys)) * sc) / 2;
+  return 'M' + p.map(([x, y]) => `${(ox + (x - x0) * sc).toFixed(1)},${(oy + (y1 - y) * sc).toFixed(1)}`).join('L') + 'Z';
 }
 
 function tick(el, from, to, k){
@@ -97,6 +106,14 @@ function update(){
 
   const r = derive(data, state.track, state), v = r.v;
   $('#tName').textContent = r.track.name; $('#tCirc').textContent = r.track.circuit;
+  if (state.track !== lastTrack) {           // real layout under the 3D car + redraw the panel's track map
+    const base = r.track.baseOf || r.track.id;
+    if (TR[base]) scene?.setTrack(TR[base].pts, !!r.track.baseOf, lastTrack !== null);
+    const map = $('#tmap'); map.querySelector('path').setAttribute('d', mapPath(base, 160, 90, 6));
+    map.classList.remove('draw'); void map.getBoundingClientRect(); map.classList.add('draw');
+    $('#tLen').textContent = TR[base] ? `${(TR[base].len / 1000).toFixed(3)} km${r.track.baseOf ? ' · reversed' : ''}` : '';
+    lastTrack = state.track;
+  }
   const df = v.fw + v.rw, dfl = df < 30 ? 'Low downforce' : df < 70 ? 'Medium downforce' : 'High downforce';
   $('#carChips').innerHTML = `<span class="chip acc">${dfl}</span><span class="chip">Aero ${v.fw}/${v.rw}</span>${state.weather === 'wet' ? '<span class="chip wx">Wet</span>' : ''}${r.reverse ? '<span class="chip amber">Reverse · untested</span>' : ''}`;
   const sess = OPTS.session.find(o => o[0] === state.session)[1] + (state.session === 'race' ? ' · ' + OPTS.length.find(o => o[0] === state.length)[1] : '');
@@ -267,8 +284,8 @@ $('#gate').addEventListener('keydown', e => e.key === 'Escape' && enter(false));
 (sfx.wanted ? $('#startSound') : $('#startQuiet')).focus();
 
 // ---------------- boot ----------------
-fetch('setups.json', { cache: 'no-cache' }).then(r => r.json()).then(async d => {
-  data = d; $('#upd').textContent = d.updated;
+Promise.all(['setups.json', 'tracks/tracks.json'].map(u => fetch(u, { cache: 'no-cache' }).then(r => r.json()))).then(async ([d, tr]) => {
+  data = d; TR = tr; $('#upd').textContent = d.updated;
   $('#stats').innerHTML = `<span><b>${d.tracks.length}</b> layouts</span><span><b>${d.tracks.length * 20}</b> setups</span><span><b>${d.log.length}</b> radio fixes</span><span>No TC · No ABS</span>`;
   readHash(); buildControls();
   try {

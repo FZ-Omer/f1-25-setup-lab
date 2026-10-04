@@ -17,7 +17,7 @@ Setups for all 24 F1 25 tracks (+3 reverse layouts) — qualifying, sprint, race
 Check every setup stays in the game's slider ranges: `node check.js`
 
 ## Files
-`index.html` (layout/styles) · `app.js` (UI, motion, feedback) · `scene.js` (3D garage) · `sfx.js` (synthesised sound) · `derive.js` (setup rules) · `setups.json` (data) · `audio/` (sounds + CREDITS.txt) · `models/` (3D car + CREDITS.txt) · `vendor/` (three.js r186, MIT — licence included)
+`index.html` (layout/styles) · `app.js` (UI, motion, feedback) · `scene.js` (3D garage) · `sfx.js` (synthesised sound) · `derive.js` (setup rules) · `setups.json` (data) · `audio/` (sounds + CREDITS.txt) · `models/` (3D car + CREDITS.txt) · `tracks/` (circuit layouts, MIT) · `vendor/` (three.js r186, MIT — licence included)
 
 ## Licences
-Everything here is original or openly licensed: three.js (MIT), Titillium Web + JetBrains Mono (SIL OFL 1.1), 3D car "F1 2026 concept (polygon model)" by Qvist_Designs (CC BY 4.0, see `models/CREDITS.txt`), real F1 engine field recordings (CC BY 4.0) and radio static (CC0) — see `audio/CREDITS.txt`. No photos, logos, signatures or quotes of real people or teams. Unofficial fan project — not affiliated with Lewis Hamilton, any F1 team, Formula 1, EA or Codemasters.
+Everything here is original or openly licensed: three.js (MIT), Titillium Web + JetBrains Mono (SIL OFL 1.1), 3D car "F1 2026 concept (polygon model)" by Qvist_Designs (CC BY 4.0, see `models/CREDITS.txt`), circuit layouts from bacinger/f1-circuits (MIT, `tracks/LICENSE-f1-circuits.md`), real F1 engine field recordings (CC BY 4.0) and radio static (CC0) — see `audio/CREDITS.txt`. No photos, logos, signatures or quotes of real people or teams. Unofficial fan project — not affiliated with Lewis Hamilton, any F1 team, Formula 1, EA or Codemasters.
