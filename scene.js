@@ -100,7 +100,6 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
       trackGroup.add(new THREE.Mesh(strip(sx * (hw - 0.45), sx * (hw - 0.2), 0.01), paintLine));
       trackGroup.add(new THREE.Mesh(strip(sx * hw, sx * (hw + 1.4), 0.012, isBend, i => i % 2 ? [0.82, 0.08, 0.08] : [0.92, 0.92, 0.92]), kerbMat));
     }
-    trackGroup.add(box(2 * hw, 0.01, 0.5, 0, 0.012, 3.6, paintLine));                                   // start line
     trail = new THREE.Mesh(strip(-11, 11, 0.06), trailMat); trail.geometry.setDrawRange(0, 0); trailQuads = n; trackGroup.add(trail);
     const box3 = new THREE.Box3().setFromPoints(S); box3.getCenter(tCenter); tCenter.y = 0;
     const sz = box3.getSize(new THREE.Vector3()); tRadius = Math.max(sz.x, sz.z) / 2;
@@ -148,8 +147,9 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
 
     // camera choreography: hero → inside the setup panel → low rear chase
     const hero = { el: 12, az: 38 + time * 5, dist: mobile ? 12 : 8.4, cx: W * (mobile ? 0.5 : 0.64), cy: H * (mobile ? 0.68 : 0.56) };
-    const p = v.panel, ph = Math.max(160, p.height - 200), pw = Math.max(160, p.width - 40), tan = Math.tan(rad(camera.fov / 2));
-    const lab = { el: 70, az: 180, dist: Math.max(6.4 * H / ph, 2.9 * H / pw) / (2 * tan), cx: p.left + p.width / 2, cy: p.top + 160 + ph / 2 };
+    const p = v.panel, ph = Math.max(120, p.height), pw = Math.max(120, p.width), tan = Math.tan(rad(camera.fov / 2));
+    // fit the 5.4 m car (plus room for the tyre labels) into the safe box
+    const lab = { el: 70, az: 180, dist: Math.max(6.6 * H / ph, 3.4 * H / pw) / (2 * tan), cx: p.left + p.width / 2, cy: p.top + p.height / 2 };
     const out = { el: 7, az: 152 + time * 3, dist: mobile ? 13 : 9.5, cx: W * (mobile ? 0.5 : 0.7), cy: H * 0.55 };
     const mix = (x, y, t) => x + (y - x) * t, e = t => t * t * (3 - 2 * t);
     const a = e(v.a), b = e(v.b), target = {};

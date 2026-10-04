@@ -235,14 +235,15 @@ function loop(now){
 requestAnimationFrame(loop);
 
 function view(){
-  const H = innerHeight, panel = $('#carpanel').getBoundingClientRect(), fb = $('#feedback').getBoundingClientRect();
-  return { a: clamp((H - panel.top) / (H * 0.7)), b: clamp((H * 0.85 - fb.top) / (H * 0.6)), panel, vel };
+  // the car is framed inside #carSafe: the empty area between the panel's header and its legend
+  const H = innerHeight, top = $('#carpanel').getBoundingClientRect().top, fb = $('#feedback').getBoundingClientRect();
+  return { a: clamp((H - top) / (H * 0.7)), b: clamp((H * 0.85 - fb.top) / (H * 0.6)), panel: $('#carSafe').getBoundingClientRect(), vel };
 }
 function placeHud(f){
-  const panel = $('#carpanel').getBoundingClientRect();
+  const panel = $('#carSafe').getBoundingClientRect();
   document.getElementById('hud').style.opacity = f.lab > 0.6 ? 1 : 0;
   for (const k in hud) {
-    const [x, y] = f[k], inside = x > panel.left && x < panel.right && y > panel.top + 90 && y < panel.bottom - 30;
+    const [x, y] = f[k], inside = x > panel.left && x < panel.right && y > panel.top - 4 && y < panel.bottom + 4;
     hud[k].style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
     hud[k].style.visibility = inside ? 'visible' : 'hidden';
   }

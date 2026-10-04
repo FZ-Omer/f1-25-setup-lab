@@ -117,7 +117,9 @@ main,header,footer,.marquee{position:relative;z-index:2}
 .tracks button small{display:block;color:var(--mute);font-size:11px;line-height:1.2}
 .tracks svg.mini{display:block;width:64px;height:36px;margin-top:5px;fill:none;stroke:var(--mute);stroke-width:1.6;stroke-linejoin:round;transition:stroke .3s}
 .tracks button[aria-pressed=true] svg.mini,.tracks button:hover svg.mini{stroke:var(--accent)}
-#tmap{display:block;width:100%;max-width:200px;height:auto;margin:6px 0 2px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round;filter:drop-shadow(0 0 6px var(--accent))}
+.phead{display:grid;grid-template-columns:1fr 128px;gap:10px;align-items:start}
+.safe{flex:1;min-height:260px}body.no3d .safe{display:none}
+#tmap{display:block;width:100%;height:auto;margin:2px 0 0;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linejoin:round;filter:drop-shadow(0 0 6px var(--accent))}
 #tmap.draw path{stroke-dasharray:1;stroke-dashoffset:1;animation:drawmap 2.4s var(--ease) forwards}
 @keyframes drawmap{to{stroke-dashoffset:0}}
 .tlen{font:600 11px var(--mono);color:var(--mute);letter-spacing:.08em}
@@ -144,7 +146,7 @@ main,header,footer,.marquee{position:relative;z-index:2}
 @media (max-width:760px){#hud span{font-size:11px;padding:2px 5px}#hud span small{font-size:8px}}
 .carpanel h3{font-size:34px;font-weight:900;font-style:italic;text-transform:uppercase}
 .carpanel .circ{color:var(--mute);font-size:14px}
-.carpanel .legend{margin-top:auto}
+.carpanel .legend{margin-top:auto;padding-top:8px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .chip{font:700 11px var(--mono);padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;background:rgba(0,0,0,.3)}
 .chip.amber{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
@@ -287,11 +289,13 @@ footer{position:relative;z-index:2;padding:28px 0 90px;color:var(--mute);font-si
     </nav>
     <div class="wrap stage">
       <aside class="carpanel" id="carpanel">
-        <h3 id="tName">—</h3>
-        <div class="circ" id="tCirc"></div>
-        <svg id="tmap" viewBox="0 0 160 90" aria-hidden="true"><path pathLength="1"/></svg><div class="tlen" id="tLen"></div>
+        <div class="phead">
+          <div><h3 id="tName">—</h3><div class="circ" id="tCirc"></div><div class="tlen" id="tLen"></div></div>
+          <svg id="tmap" viewBox="0 0 160 90" aria-hidden="true"><path pathLength="1"/></svg>
+        </div>
         <div class="chips" id="carChips"></div>
         <p class="hint3d">LIVE 3D · ride height &amp; tyre heat follow the setup</p>
+        <div class="safe" id="carSafe" aria-hidden="true"></div>
         <svg class="car" viewBox="0 0 320 500" role="img" aria-label="Top-down car diagram; highlights the part each setting changes">
           <g transform="translate(40 26)">
             <g id="z-fsus"><line class="arm" x1="56" y1="100" x2="104" y2="104"/><line class="arm" x1="56" y1="124" x2="104" y2="128"/><line class="arm" x1="184" y1="100" x2="136" y2="104"/><line class="arm" x1="184" y1="124" x2="136" y2="128"/></g>
