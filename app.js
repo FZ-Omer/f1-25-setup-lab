@@ -40,13 +40,13 @@ const writeHash = () => history.replaceState(null, '', `#${state.track}/${state.
 // ---------------- UI build ----------------
 function buildControls(){
   $('#tracks').innerHTML = data.tracks.map((t, i) => `<button type="button" data-id="${t.id}" aria-pressed="false"><em>${t.baseOf ? 'REV' : 'R' + String(data.tracks.filter((x, j) => j <= i && !x.baseOf).length).padStart(2, '0')}</em>${t.name}<small>${t.circuit}</small></button>`).join('');
-  $('#tracks').onclick = e => { const b = e.target.closest('button'); if (b && b.dataset.id !== state.track) { state.track = b.dataset.id; sfx.rev(0.75, 0.1); update(); } };
+  $('#tracks').onclick = e => { const b = e.target.closest('button'); if (b && b.dataset.id !== state.track) { state.track = b.dataset.id; sfx.passby(1.1, 0.6); update(); radioMsg(`Copy. ${b.firstChild.nextSibling.textContent} setup loaded.`); } };
   for (const key of Object.keys(OPTS)) {
     const fs = $(`#${key}Seg`);
     fs.insertAdjacentHTML('beforeend', OPTS[key].map(([v, l]) => `<input type="radio" name="${key}" id="${key}-${v}" value="${v}"><label for="${key}-${v}">${l}</label>`).join(''));
     fs.onchange = e => {
       state[key] = e.target.value;
-      if (key === 'weather') { sfx.tick(); sfx.rain(state.weather === 'wet'); } else sfx.shift();
+      if (key === 'weather') { sfx.tick(); sfx.rain(state.weather === 'wet'); radioMsg(state.weather === 'wet' ? 'Rain is coming. Wet setup is on the sheet.' : 'Track is drying. Dry setup loaded.'); } else sfx.shift();
       update();
     };
   }
@@ -136,7 +136,7 @@ function setupLine(v){
   return `FW ${v.fw} · RW ${v.rw} · Diff ${v.don}/${v.doff} · Camber ${fmt('fc',v.fc)}/${fmt('rc',v.rc)} · Toe ${fmt('ft',v.ft)}/${fmt('rt',v.rt)} · Susp ${v.fs}/${v.rs} · ARB ${v.farb}/${v.rarb} · RH ${v.frh}/${v.rrh} · Bias ${v.bb} · BP ${v.bp} · Tyres FR ${fmt('tfr',v.tfr)} FL ${fmt('tfl',v.tfl)} RR ${fmt('trr',v.trr)} RL ${fmt('trl',v.trl)}`;
 }
 $('#fbForm').onsubmit = e => {
-  e.preventDefault(); sfx.radio();
+  e.preventDefault(); radioMsg('Copy that. Feedback is with the engineers, fix coming.');
   const r = window._current, sym = [...document.querySelectorAll('#symp input:checked')].map(i => i.value);
   const sess = state.session === 'race' ? `Race ${state.length}` : state.session;
   const title = `[Feedback] ${r.track.name} · ${state.weather} · ${sess} · ${state.input} — ${sym.join(', ')}`.slice(0, 240);
@@ -187,7 +187,7 @@ document.querySelectorAll('[data-reveal], .split').forEach(el => el.closest('.he
 const MQ = 'Dry · Wet · Qualifying · Sprint · Race · <b>44</b> · Wheel · Pad · No TC · No ABS · ';
 $('#mq1').innerHTML = MQ.repeat(6); $('#mq2').innerHTML = 'Team radio · Box this lap · Tyres · Balance · <b>44</b> · Push now · '.repeat(6);
 
-let lastY = scrollY, vel = 0, career = -1, mq = 0;
+let lastY = scrollY, vel = 0, career = -1, mq = 0, lastPass = 0, garageOn = false;
 const hud = Object.fromEntries([...document.querySelectorAll('#hud span')].map(s => [s.dataset.h, s]));
 const clamp = x => Math.max(0, Math.min(1, x));
 
@@ -195,7 +195,10 @@ function loop(now){
   requestAnimationFrame(loop);
   const H = innerHeight, y = scrollY;
   vel = vel * 0.85 + (y - lastY) * 60 * 0.15; lastY = y;
-  sfx.speed(Math.abs(vel));
+  // fast scroll flick → a real car passing (left to right), pitch follows how hard you flick
+  if (Math.abs(vel) > 2600 && now - lastPass > 2400) { lastPass = now; sfx.passby(0.9 + Math.min(0.5, Math.abs(vel) / 9000), 0.45); }
+  const v = view(), inLab = v.a > 0.5 && v.b < 0.5;
+  if (inLab !== garageOn && sfx.garage(inLab) !== false) garageOn = inLab;
   const p = clamp(y / Math.max(1, document.documentElement.scrollHeight - H));
   if (Math.abs(p - career) > 0.003) {
     career = p;   // teal → purple → red, same hue walk as the 3D accent
@@ -229,20 +232,31 @@ function placeHud(f){
 const soundBtn = $('#sound');
 function setSound(on){
   sfx.enable(on); soundBtn.setAttribute('aria-pressed', on); $('#soundTxt').textContent = on ? 'Sound on' : 'Sound off';
-  sfx.rain(on && state.weather === 'wet');
+  sfx.rain(on && state.weather === 'wet'); garageOn = false; if (!on) sfx.garage(false);
 }
-soundBtn.onclick = () => { setSound(!sfx.on); if (sfx.on) sfx.rev(0.5, 0); };
+soundBtn.onclick = async () => { setSound(!sfx.on); if (sfx.on) { await sfx.ready(); sfx.shift(); } };
 
-function enter(withSound){
-  setSound(withSound);
+// team-radio caption (no voices — lines are generic, written for this site)
+let radioT, radioSound = 0;
+function radioMsg(text){
+  const el = $('#radioMsg'); el.querySelector('p').textContent = text; el.classList.add('show');
+  if (performance.now() - radioSound > 3500) { radioSound = performance.now(); sfx.radio(); }
+  clearTimeout(radioT); radioT = setTimeout(() => el.classList.remove('show'), 3800);
+}
+
+async function enter(withSound){
   const gate = $('#gate'), dots = gate.querySelectorAll('.lights i'), done = () => {
-    gate.classList.add('gone'); sfx.rev(1, 0.35);
+    gate.classList.add('gone');
     document.querySelectorAll('.hero .split, .hero [data-reveal]').forEach((el, i) => setTimeout(() => el.classList.add('in'), 150 + i * 110));
+    setTimeout(() => radioMsg('Radio check. Car is in the garage, setups loaded.'), 1400);
   };
   gate.querySelectorAll('button').forEach(b => b.disabled = true);
+  setSound(withSound);
+  if (withSound) { $('#startSound').textContent = 'Warming up the engine…'; await sfx.ready(); sfx.start(); }
   if (reduce) return done();
-  dots.forEach((d, i) => setTimeout(() => { d.classList.add('on'); sfx.lights(i); }, 200 + i * 420));
-  setTimeout(() => { dots.forEach(d => d.classList.remove('on')); done(); }, 200 + 5 * 420 + 500);
+  const lead = withSound ? 1600 : 200;           // let the engine fire up before the first light
+  dots.forEach((d, i) => setTimeout(() => { d.classList.add('on'); sfx.lights(); }, lead + i * 700));
+  setTimeout(() => { dots.forEach(d => d.classList.remove('on')); sfx.launch(); done(); }, lead + 5 * 700 + 450);
 }
 $('#startSound').onclick = () => enter(true);
 $('#startQuiet').onclick = () => enter(false);

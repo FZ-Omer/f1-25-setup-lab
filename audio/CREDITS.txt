@@ -1,0 +1,15 @@
+Audio used on F1 25 Setup Lab
+All files below were trimmed, loudness-normalised and re-encoded to MP3 for this site.
+
+engine-start.mp3  <- "F1 BR 06 Engine Starts.wav" by rfhache (Brazil GP 2006, recorded at the circuit)
+                     https://freesound.org/people/rfhache/sounds/44771/  — CC BY 4.0
+garage.mp3        <- "F1 BR 07 Starting Engines.wav" by rfhache (Brazil GP 2007, grandstand B), 24s–36s
+                     https://freesound.org/people/rfhache/sounds/44225/  — CC BY 4.0
+launch.mp3        <- "F1 BR 07 Llegada VPrevia.wav" by rfhache (Brazil GP 2007 formation lap), 5s–10.5s
+                     https://freesound.org/people/rfhache/sounds/44188/  — CC BY 4.0
+passby.mp3        <- "Formula F1 Racing.wav" by monkeyman535 (recorded at Formula One in Montreal), 2.5s–8.5s
+                     https://freesound.org/people/monkeyman535/sounds/400130/  — CC BY 4.0
+radio-static.mp3  <- static1.wav from "Frequency Static Sound Effects" by bretbernhoft, 30s–32.5s, band-passed to radio range
+                     https://opengameart.org/content/frequency-static-sound-effects  — CC0
+
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/
