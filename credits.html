@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Credits & Licences · F1 25 Setup Lab</title>
+<meta name="description" content="Credits, licences, data sources and methodology for the F1 25 Setup Lab fan project.">
+<meta name="author" content="FZ-Omer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,600;0,700;0,900;1,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body data-page="credits">
+<div id="radioMsg" role="status" aria-live="polite"><span class="tag">RADIO</span><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p></p></div>
+<button id="sound" type="button" aria-pressed="false"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="soundTxt">Sound off</span></button>
+<header class="topnav"><div class="wrap">
+  <a class="brandmark" href="index.html" data-nav="index.html" aria-label="Setup Lab home">Setup <b>Lab</b><span> · 44</span></a>
+  <nav class="navlinks" aria-label="Pages"><a href="index.html" data-nav="index.html">Setup</a><a href="radio.html" data-nav="radio.html">Team Radio</a><a href="credits.html" data-nav="credits.html" aria-current="page">Credits</a></nav>
+</div></header>
+
+<main class="page">
+  <section class="wrap">
+    <div class="title">
+      <div><span class="eyebrow">Legal</span><h1 class="split">Credits &amp; Licences</h1></div>
+      <p data-reveal>Setup Lab is built only from original work and openly licensed material. Every third-party asset is listed below with its creator, source, licence and what was changed.</p>
+    </div>
+    <nav class="glass toc" aria-label="On this page">
+      <a href="#assets">Third-party assets</a><a href="#data">Data sources</a><a href="#method">How setups are built</a><a href="#notused">What we don't use</a><a href="#legal">Trademarks</a><a href="#contact">Contact</a>
+    </nav>
+
+    <section class="cblock" id="assets">
+      <h2>Third-party assets</h2>
+      <p class="lead">Licensed assets used on this site. Creative Commons Attribution (CC BY 4.0) works are credited here as the licence requires.</p>
+      <div class="tablewrap"><table class="ctable">
+        <thead><tr><th>Asset</th><th>Creator</th><th>Licence</th><th>Used for</th><th>Changes</th></tr></thead>
+        <tbody>
+          <tr><td data-label="Asset"><b>F1 2026 concept (polygon model)</b><small>3D model</small></td><td data-label="Creator"><a href="https://sketchfab.com/3d-models/f1-2026-concept-polygon-model-ea3bde709b1e4dc9b0ec8557d106ed42" rel="noopener">Qvist_Designs</a> · Sketchfab</td><td data-label="Licence"><a class="lic" href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></td><td data-label="Used for">The 3D car</td><td data-label="Changes">Re-oriented, scaled, split into parts, simplified, compressed, repainted</td></tr>
+          <tr><td data-label="Asset"><b>F1 BR 06 Engine Starts</b><small>Field recording, Brazil GP 2006</small></td><td data-label="Creator"><a href="https://freesound.org/people/rfhache/sounds/44771/" rel="noopener">rfhache</a> · Freesound</td><td data-label="Licence"><a class="lic" href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></td><td data-label="Used for">Start-engine sound</td><td data-label="Changes">Trimmed, loudness-normalised, MP3</td></tr>
+          <tr><td data-label="Asset"><b>F1 BR 07 Starting Engines</b><small>Field recording, Brazil GP 2007</small></td><td data-label="Creator"><a href="https://freesound.org/people/rfhache/sounds/44225/" rel="noopener">rfhache</a> · Freesound</td><td data-label="Licence"><a class="lic" href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></td><td data-label="Used for">Garage ambience</td><td data-label="Changes">Trimmed (24–36 s), normalised, MP3</td></tr>
+          <tr><td data-label="Asset"><b>F1 BR 07 Llegada VPrevia</b><small>Field recording, formation lap</small></td><td data-label="Creator"><a href="https://freesound.org/people/rfhache/sounds/44188/" rel="noopener">rfhache</a> · Freesound</td><td data-label="Licence"><a class="lic" href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></td><td data-label="Used for">Lights-out launch</td><td data-label="Changes">Trimmed (5–10.5 s), normalised, MP3</td></tr>
+          <tr><td data-label="Asset"><b>Formula F1 Racing</b><small>Field recording, Montreal</small></td><td data-label="Creator"><a href="https://freesound.org/people/monkeyman535/sounds/400130/" rel="noopener">monkeyman535</a> · Freesound</td><td data-label="Licence"><a class="lic" href="https://creativecommons.org/licenses/by/4.0/" rel="noopener">CC BY 4.0</a></td><td data-label="Used for">Pass-by on scroll and track change</td><td data-label="Changes">Trimmed (2.5–8.5 s), normalised, MP3</td></tr>
+          <tr><td data-label="Asset"><b>Frequency Static Sound Effects</b><small>Radio static</small></td><td data-label="Creator"><a href="https://opengameart.org/content/frequency-static-sound-effects" rel="noopener">bretbernhoft</a> · OpenGameArt</td><td data-label="Licence"><span class="lic cc0">CC0</span></td><td data-label="Used for">Team-radio squelch</td><td data-label="Changes">Trimmed, band-passed to radio range, MP3</td></tr>
+          <tr><td data-label="Asset"><b>f1-circuits</b><small>Circuit layouts (GeoJSON)</small></td><td data-label="Creator"><a href="https://github.com/bacinger/f1-circuits" rel="noopener">Tomislav Bacinger</a> · GitHub</td><td data-label="Licence"><a class="lic" href="tracks/LICENSE-f1-circuits.md">MIT</a></td><td data-label="Used for">3D tracks and track maps</td><td data-label="Changes">Converted to local metres; licence copy included</td></tr>
+          <tr><td data-label="Asset"><b>three.js r186</b><small>3D engine</small></td><td data-label="Creator"><a href="https://github.com/mrdoob/three.js" rel="noopener">three.js authors</a></td><td data-label="Licence"><a class="lic" href="vendor/THREE-LICENSE.txt">MIT</a></td><td data-label="Used for">Rendering, model loading</td><td data-label="Changes">Bundled and minified; licence included</td></tr>
+          <tr><td data-label="Asset"><b>Titillium Web · JetBrains Mono</b><small>Typefaces</small></td><td data-label="Creator">Accademia di Belle Arti di Urbino · JetBrains, via <a href="https://fonts.google.com" rel="noopener">Google Fonts</a></td><td data-label="Licence"><a class="lic" href="https://openfontlicense.org" rel="noopener">SIL OFL 1.1</a></td><td data-label="Used for">All type</td><td data-label="Changes">None</td></tr>
+        </tbody>
+      </table></div>
+      <p class="lead" style="margin-top:12px">Credit files also ship with the code: <a href="audio/CREDITS.txt">audio/CREDITS.txt</a> · <a href="models/CREDITS.txt">models/CREDITS.txt</a>.</p>
+    </section>
+
+    <section class="cblock" id="data">
+      <h2>Data sources</h2>
+      <p class="lead">Setup numbers and tuning rules come from these published references. They are cited, not copied as licensed content, and will be removed on request.</p>
+      <ul>
+        <li><b>Base setups (dry &amp; wet, all tracks)</b> — <a href="https://www.giga.de/games/f1-25-trocken-und-regen-setups-fuer-alle-strecken--01JWZX7QFT20S5FHGSAP1FBYQV" rel="noopener">GIGA, "F1 25: Trocken- und Regen-Setups für alle Strecken"</a>, Marco Tito Aronica, 1 Oct 2025.</li>
+        <li><b>Tuning directions</b> — <a href="https://help.ea.com/en/articles/f1/f1-25/car-setups-guide/" rel="noopener">EA Help: F1 25 car setups guide</a> · <a href="https://traxion.gg/f1-25-setup-guide/" rel="noopener">Traxion F1 25 setup guide</a> (Ross McGregor, Jun 2025) · <a href="https://www.f1laps.com/blog/f1-25-controller-settings/" rel="noopener">F1Laps controller settings</a> · <a href="https://racinggames.gg/article/f1-22-setup-tips-from-a-sim-racing-pro" rel="noopener">RacingGames.gg setup tips</a> (Nathan Tague, 2022).</li>
+      </ul>
+    </section>
+
+    <section class="cblock method" id="method">
+      <h2>How the setups are built</h2>
+      <p>One published dry and one published wet setup per track is the base. The article doesn't say if they're race or qualifying setups, so they are used as the <b>qualifying baseline</b>. Every other variant is derived with the rules below. The <i>direction</i> of each rule comes from a source; the <i>size</i> of each step is a heuristic that driver feedback calibrates over time.</p>
+      <ol id="rules"></ol>
+      <p><b>Known gaps:</b> no published reverse-layout setups (the forward layout is used); GIGA's Qatar wet setup lists uneven rear pressures (RR 22.6 / RL 24.0, kept as published); game patches after Oct 2025 may have shifted the meta; F1 25's exact sprint parc fermé rule is not confirmed.</p>
+    </section>
+
+    <section class="cblock" id="notused">
+      <h2>What this site does not use</h2>
+      <ul class="ticks">
+        <li>Official Formula 1, team, driver or game logos, liveries or artwork</li>
+        <li>Photos, likeness, signatures or quotes of any real person</li>
+        <li>Broadcast audio, team-radio recordings or voices</li>
+        <li>Screenshots, track images or assets from the F1 25 game</li>
+      </ul>
+    </section>
+
+    <section class="cblock" id="legal">
+      <h2>Trademarks &amp; disclaimer</h2>
+      <p>Setup Lab is an unofficial, non-commercial fan project. It is not affiliated with, endorsed or sponsored by Lewis Hamilton, Formula 1, the FIA, any Formula 1 team, Electronic Arts or Codemasters. "F1", "Formula 1", "F1 25" and related names are used only to describe what this site is about; all trademarks belong to their respective owners.</p>
+      <p>Setups are provided as-is for a video game. They are starting points, not guarantees — tune them to your own driving.</p>
+      <p>© 2026 <a href="https://github.com/FZ-Omer" rel="noopener">FZ-Omer</a>. Site design, code and derived setup rules. All rights reserved.</p>
+    </section>
+
+    <section class="cblock" id="contact">
+      <h2>Contact</h2>
+      <div class="glass contactcard">
+        <p style="margin:0;max-width:560px">Spotted a missing or wrong credit, or want something removed? Email and it will be fixed promptly.</p>
+        <a class="btn" href="mailto:umarofficemail@gmail.com?subject=F1%2025%20Setup%20Lab%20%E2%80%94%20Credits">umarofficemail@gmail.com</a>
+      </div>
+    </section>
+  </section>
+</main>
+
+<footer class="sitefoot"><div class="wrap">
+  <div class="cols">
+    <div>
+      <a class="brandmark" href="index.html" data-nav="index.html">Setup <b>Lab</b><span> · 44 Fan Edition</span></a>
+      <p>F1 25 car setups for every track, session and condition, tuned from real driver feedback. An unofficial fan project.</p>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="index.html" data-nav="index.html">Setup lab</a></li>
+        <li><a href="radio.html" data-nav="radio.html">Team radio</a></li>
+        <li><a href="credits.html" data-nav="credits.html">Credits &amp; licences</a></li>
+        <li><a href="https://github.com/FZ-Omer/f1-25-setup-lab" rel="noopener">Source on GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p>Questions, credit corrections or removal requests — get in touch:</p>
+      <a class="mail" href="mailto:umarofficemail@gmail.com?subject=F1%2025%20Setup%20Lab">umarofficemail@gmail.com</a>
+    </div>
+  </div>
+  <div class="legal">
+    <span>© 2026 <a href="https://github.com/FZ-Omer" rel="noopener">FZ-Omer</a>. All rights reserved. Third-party assets remain under their own licences and are listed on the <a href="credits.html" data-nav="credits.html">Credits</a> page.</span>
+    <span>Unofficial fan project — not affiliated with or endorsed by Lewis Hamilton, Formula 1, any Formula 1 team, Electronic Arts or Codemasters. All trademarks belong to their respective owners.</span>
+    <span>Setup data last updated <span id="upd">—</span>.</span>
+  </div>
+</div></footer>
+<script src="derive.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

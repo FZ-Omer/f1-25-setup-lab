@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Team Radio · F1 25 Setup Lab</title>
+<meta name="description" content="Report oversteer, understeer or tyre wear from your F1 25 setup — the fix comes back as a reply and a tuned setup.">
+<meta name="author" content="FZ-Omer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,600;0,700;0,900;1,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site.css">
+</head>
+<body data-page="radio">
+<svg id="bgmap" viewBox="0 0 160 90" aria-hidden="true"><path pathLength="1"/></svg>
+<div id="radioMsg" role="status" aria-live="polite"><span class="tag">RADIO</span><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span><p></p></div>
+<button id="sound" type="button" aria-pressed="false"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="soundTxt">Sound off</span></button>
+<header class="topnav"><div class="wrap">
+  <a class="brandmark" href="index.html" data-nav="index.html" aria-label="Setup Lab home">Setup <b>Lab</b><span> · 44</span></a>
+  <nav class="navlinks" aria-label="Pages"><a href="index.html" data-nav="index.html">Setup</a><a href="radio.html" data-nav="radio.html" aria-current="page">Team Radio</a><a href="credits.html" data-nav="credits.html">Credits</a></nav>
+</div></header>
+
+<main class="page">
+  <section class="wrap">
+    <div class="title">
+      <div><span class="eyebrow">Pit wall</span><h1 class="split">Team Radio</h1></div>
+      <p data-reveal>Felt oversteer, understeer or uneven tyre wear? Pick the setup you ran, tell the pit wall what the car did, and the fix comes back as a reply and a tuned setup.</p>
+    </div>
+
+    <div class="glass step" data-reveal>
+      <h3><span>1</span> Which setup did you run?</h3>
+      <nav class="controls" aria-label="Setup selector">
+        <div class="tracks" id="tracks"></div>
+        <div class="toggles">
+          <fieldset class="seg" id="weatherSeg"><legend>Weather</legend></fieldset>
+          <fieldset class="seg" id="sessionSeg"><legend>Session</legend></fieldset>
+          <fieldset class="seg" id="lengthSeg"><legend>Race length</legend></fieldset>
+          <fieldset class="seg" id="inputSeg"><legend>Input</legend></fieldset>
+        </div>
+      </nav>
+      <details class="ranwrap" id="ranWrap"><summary>Setup values for this run</summary><div class="ran" id="ranSheet"></div></details>
+    </div>
+
+    <div class="fb">
+      <form class="glass form" id="fbForm" data-reveal>
+        <div class="radio"><div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="chips" id="fbCtx" style="margin:0"></div></div>
+        <fieldset class="symp" id="symp"><legend>2 · What did the car do?</legend></fieldset>
+        <div class="fields">
+          <label>Corner speed<select id="fbSpeed"><option>All corners</option><option>Slow corners</option><option>Medium corners</option><option>High-speed corners</option></select></label>
+          <label>Tyre compound<select id="fbTyre"><option>Soft</option><option>Medium</option><option>Hard</option><option>Intermediate</option><option>Wet</option></select></label>
+          <label>Which corners / lap?<input type="text" id="fbWhere" placeholder="e.g. T1, T10 hairpin, after lap 8"></label>
+          <label>Best lap (optional)<input type="text" id="fbLap" placeholder="1:29.412"></label>
+          <label class="full">Notes<textarea id="fbNotes" placeholder="Wear % at end of stint, when it starts, what you already tried…"></textarea></label>
+        </div>
+        <button class="btn" id="fbSend" type="submit" disabled style="margin-top:14px">Send to the pit wall (GitHub) →</button>
+        <p class="hint">Opens a pre-filled GitHub issue — hit <b>Create</b>, then tell Claude "check my F1 feedback".</p>
+      </form>
+      <div class="glass log" data-reveal>
+        <h3>Waiting for a fix</h3><div id="pending" class="empty">Checking GitHub…</div>
+        <h3 style="margin-top:8px">Tuning log</h3><div id="log"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="sitefoot"><div class="wrap">
+  <div class="cols">
+    <div>
+      <a class="brandmark" href="index.html" data-nav="index.html">Setup <b>Lab</b><span> · 44 Fan Edition</span></a>
+      <p>F1 25 car setups for every track, session and condition, tuned from real driver feedback. An unofficial fan project.</p>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <ul>
+        <li><a href="index.html" data-nav="index.html">Setup lab</a></li>
+        <li><a href="radio.html" data-nav="radio.html">Team radio</a></li>
+        <li><a href="credits.html" data-nav="credits.html">Credits &amp; licences</a></li>
+        <li><a href="https://github.com/FZ-Omer/f1-25-setup-lab" rel="noopener">Source on GitHub</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <p>Questions, credit corrections or removal requests — get in touch:</p>
+      <a class="mail" href="mailto:umarofficemail@gmail.com?subject=F1%2025%20Setup%20Lab">umarofficemail@gmail.com</a>
+    </div>
+  </div>
+  <div class="legal">
+    <span>© 2026 <a href="https://github.com/FZ-Omer" rel="noopener">FZ-Omer</a>. All rights reserved. Third-party assets remain under their own licences and are listed on the <a href="credits.html" data-nav="credits.html">Credits</a> page.</span>
+    <span>Unofficial fan project — not affiliated with or endorsed by Lewis Hamilton, Formula 1, any Formula 1 team, Electronic Arts or Codemasters. All trademarks belong to their respective owners.</span>
+    <span>Setup data last updated <span id="upd">—</span>.</span>
+  </div>
+</div></footer>
+<script src="derive.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

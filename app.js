@@ -1,5 +1,7 @@
 import { sfx } from './sfx.js';
 
+// One script for all three pages; <body data-page="home|radio|credits"> decides what runs.
+const PAGE = document.body.dataset.page || 'home';
 const REPO = 'FZ-Omer/f1-25-setup-lab';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const mobile = matchMedia('(max-width: 760px)').matches;
@@ -28,14 +30,19 @@ const SYMPTOMS = ['Understeer – entry','Understeer – mid-corner','Understeer
 let data, TR = {}, lastTrack = null, scene = null, state = { track:'australia', weather:'dry', session:'quali', length:'full', input:'wheel' }, shown = {};
 const fmt = (k, x) => x.toFixed(RANGE[k][2]);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const clamp = x => Math.max(0, Math.min(1, x));
 
-// ---------------- state <-> URL ----------------
+// ---------------- state <-> URL (nav links carry it, so every page shows the same setup) ----------------
 function readHash(){
   const [track, weather, session, length, input] = location.hash.slice(1).split('/');
   if (data.tracks.some(t => t.id === track)) state.track = track;
   for (const [k, v] of Object.entries({weather, session, length, input})) if (OPTS[k].some(o => o[0] === v)) state[k] = v;
 }
-const writeHash = () => history.replaceState(null, '', `#${state.track}/${state.weather}/${state.session}/${state.length}/${state.input}`);
+function writeHash(){
+  const h = `#${state.track}/${state.weather}/${state.session}/${state.length}/${state.input}`;
+  history.replaceState(null, '', h);
+  document.querySelectorAll('a[data-nav]').forEach(a => a.href = a.dataset.nav + h);
+}
 
 // ---------------- UI build ----------------
 function buildControls(){
@@ -50,22 +57,25 @@ function buildControls(){
       update();
     };
   }
-  $('#symp').insertAdjacentHTML('beforeend', SYMPTOMS.map((s, i) => `<input type="checkbox" id="s${i}" value="${s}"><label for="s${i}">${s}</label>`).join(''));
-  $('#symp').onchange = () => { sfx.tick(); $('#fbSend').disabled = !document.querySelector('#symp input:checked'); };
-  $('#rules').innerHTML = Object.entries(RULES).map(([c, t]) => `<li><code>${c}</code> ${t}</li>`).join('');
-  $('#groups').innerHTML = GROUPS.map(([g, keys]) => `<div class="group"><h4>${g}</h4>${keys.map(k =>
-    `<div class="rowp" tabindex="0" data-k="${k}"><div class="n">${LABEL[k][0]}<small>${LABEL[k][1]}</small></div><div class="bar"><div class="fill"></div><div class="base"></div></div><div class="val">–</div><div class="tag"></div><div class="why"></div></div>`).join('')}</div>`).join('');
-  // phones can't hover: tap a row to read why it differs from the published base
-  $('#groups').addEventListener('click', e => { const r = e.target.closest('.rowp'); if (r) r.classList.toggle('open'); });
-  const hot = k => {
-    document.querySelectorAll('.car .hot').forEach(z => z.classList.remove('hot'));
-    if (k) document.getElementById(ZONE[k]).classList.add('hot');
-    scene?.highlight(k);
-  };
-  $('#groups').addEventListener('pointerover', e => hot(e.target.closest('.rowp')?.dataset.k));
-  $('#groups').addEventListener('focusin', e => hot(e.target.closest('.rowp')?.dataset.k));
-  $('#groups').addEventListener('pointerleave', () => hot());
-  $('#groups').addEventListener('focusout', () => hot());
+  if ($('#symp')) {
+    $('#symp').insertAdjacentHTML('beforeend', SYMPTOMS.map((s, i) => `<input type="checkbox" id="s${i}" value="${s}"><label for="s${i}">${s}</label>`).join(''));
+    $('#symp').onchange = () => { sfx.tick(); $('#fbSend').disabled = !document.querySelector('#symp input:checked'); };
+  }
+  if ($('#groups')) {
+    $('#groups').innerHTML = GROUPS.map(([g, keys]) => `<div class="group"><h4>${g}</h4>${keys.map(k =>
+      `<div class="rowp" tabindex="0" data-k="${k}"><div class="n">${LABEL[k][0]}<small>${LABEL[k][1]}</small></div><div class="bar"><div class="fill"></div><div class="base"></div></div><div class="val">–</div><div class="tag"></div><div class="why"></div></div>`).join('')}</div>`).join('');
+    // phones can't hover: tap a row to read why it differs from the published base
+    $('#groups').addEventListener('click', e => { const r = e.target.closest('.rowp'); if (r) r.classList.toggle('open'); });
+    const hot = k => {
+      document.querySelectorAll('.car .hot').forEach(z => z.classList.remove('hot'));
+      if (k) document.getElementById(ZONE[k]).classList.add('hot');
+      scene?.highlight(k);
+    };
+    $('#groups').addEventListener('pointerover', e => hot(e.target.closest('.rowp')?.dataset.k));
+    $('#groups').addEventListener('focusin', e => hot(e.target.closest('.rowp')?.dataset.k));
+    $('#groups').addEventListener('pointerleave', () => hot());
+    $('#groups').addEventListener('focusout', () => hot());
+  }
 }
 
 // SVG outline of a circuit, fitted into a w×h box (north up)
@@ -75,6 +85,10 @@ function mapPath(id, w, h, pad){
   const sc = Math.min((w - 2 * pad) / (Math.max(...xs) - x0), (h - 2 * pad) / (y1 - Math.min(...ys)));
   const ox = (w - (Math.max(...xs) - x0) * sc) / 2, oy = (h - (y1 - Math.min(...ys)) * sc) / 2;
   return 'M' + p.map(([x, y]) => `${(ox + (x - x0) * sc).toFixed(1)},${(oy + (y1 - y) * sc).toFixed(1)}`).join('L') + 'Z';
+}
+function drawMap(svg, id, w, h, pad){
+  svg.querySelector('path').setAttribute('d', mapPath(id, w, h, pad));
+  svg.classList.remove('draw'); void svg.getBoundingClientRect(); svg.classList.add('draw');
 }
 
 function tick(el, from, to, k){
@@ -103,20 +117,24 @@ function update(){
   strip.scrollTo({ left: active.offsetLeft - strip.clientWidth / 2 + active.clientWidth / 2, behavior: reduce ? 'auto' : 'smooth' });
   for (const key of Object.keys(OPTS)) document.getElementById(`${key}-${state[key]}`).checked = true;
   $('#lengthSeg').hidden = state.session !== 'race';
+  const r = derive(data, state.track, state);
+  const sess = OPTS.session.find(o => o[0] === state.session)[1] + (state.session === 'race' ? ' · ' + OPTS.length.find(o => o[0] === state.length)[1] : '');
+  window._current = r;
+  if (PAGE === 'home') updateLab(r, sess); else updateRadio(r, sess);
+}
 
-  const r = derive(data, state.track, state), v = r.v;
+function updateLab(r, sess){
+  const v = r.v;
   $('#tName').textContent = r.track.name; $('#tCirc').textContent = r.track.circuit;
   if (state.track !== lastTrack) {           // real layout under the 3D car + redraw the panel's track map
     const base = r.track.baseOf || r.track.id;
     if (TR[base]) scene?.setTrack(TR[base].pts, !!r.track.baseOf, lastTrack !== null);
-    const map = $('#tmap'); map.querySelector('path').setAttribute('d', mapPath(base, 160, 90, 6));
-    map.classList.remove('draw'); void map.getBoundingClientRect(); map.classList.add('draw');
+    drawMap($('#tmap'), base, 160, 90, 6);
     $('#tLen').textContent = TR[base] ? `${(TR[base].len / 1000).toFixed(3)} km${r.track.baseOf ? ' · reversed' : ''}` : '';
     lastTrack = state.track;
   }
   const df = v.fw + v.rw, dfl = df < 30 ? 'Low downforce' : df < 70 ? 'Medium downforce' : 'High downforce';
   $('#carChips').innerHTML = `<span class="chip acc">${dfl}</span><span class="chip">Aero ${v.fw}/${v.rw}</span>${state.weather === 'wet' ? '<span class="chip wx">Wet</span>' : ''}${r.reverse ? '<span class="chip amber">Reverse · untested</span>' : ''}`;
-  const sess = OPTS.session.find(o => o[0] === state.session)[1] + (state.session === 'race' ? ' · ' + OPTS.length.find(o => o[0] === state.length)[1] : '');
   $('#sheetSub').textContent = `${r.track.name} · ${state.weather === 'dry' ? 'Dry' : 'Wet'} · ${sess} · ${state.input === 'wheel' ? 'Wheel' : 'Controller'} · No TC / No ABS`;
   const nDer = Object.values(r.why).filter(w => !w.includes('TUNED')).length, tuned = Object.values(r.why).some(w => w.includes('TUNED'));
   $('#sheetChips').innerHTML = `<span class="chip">${20 - Object.keys(r.why).length} base</span><span class="chip amber">${nDer} derived</span>${tuned ? '<span class="chip green">tuned by feedback</span>' : ''}`;
@@ -145,17 +163,22 @@ function update(){
   hud.fw.innerHTML = `<small>FRONT WING</small>${v.fw}`; hud.rw.innerHTML = `<small>REAR WING</small>${v.rw}`;
   for (const k of ['tfl','tfr','trl','trr']) hud[k].innerHTML = `<small>${k.slice(1).toUpperCase()} PSI</small>${fmt(k, v[k])}`;
   scene?.setSetup(v, RANGE); scene?.setWeather(state.weather);
-
   $('#notes').innerHTML = notes(r).map((t, i) => `<li style="animation-delay:${i * 70}ms">${t}</li>`).join('');
-  $('#fbCtx').innerHTML = `<span class="chip acc">${r.track.name}</span><span class="chip">${state.weather}</span><span class="chip">${sess}</span><span class="chip">${state.input}</span>`;
-  window._current = r;
 }
 
-// ---------------- feedback → GitHub issue ----------------
+function updateRadio(r, sess){
+  if (state.track !== lastTrack) { drawMap($('#bgmap'), r.track.baseOf || r.track.id, 160, 90, 4); lastTrack = state.track; }
+  $('#fbCtx').innerHTML = `<span class="chip acc">${r.track.name}</span><span class="chip">${state.weather}</span><span class="chip">${sess}</span><span class="chip">${state.input}</span>`;
+  $('#ranSheet').innerHTML = GROUPS.map(([g, keys]) => `<div><h4>${g}</h4>${keys.map(k => {
+    const w = r.why[k] || [], c = w.includes('TUNED') ? 'tuned' : w.length ? 'changed' : '';
+    return `<div class="kv"><span>${LABEL[k][0]}</span><b class="${c}">${fmt(k, r.v[k])}</b></div>`; }).join('')}</div>`).join('');
+}
+
+// ---------------- feedback → GitHub issue (radio page) ----------------
 function setupLine(v){
   return `FW ${v.fw} · RW ${v.rw} · Diff ${v.don}/${v.doff} · Camber ${fmt('fc',v.fc)}/${fmt('rc',v.rc)} · Toe ${fmt('ft',v.ft)}/${fmt('rt',v.rt)} · Susp ${v.fs}/${v.rs} · ARB ${v.farb}/${v.rarb} · RH ${v.frh}/${v.rrh} · Bias ${v.bb} · BP ${v.bp} · Tyres FR ${fmt('tfr',v.tfr)} FL ${fmt('tfl',v.tfl)} RR ${fmt('trr',v.trr)} RL ${fmt('trl',v.trl)}`;
 }
-$('#fbForm').onsubmit = e => {
+if ($('#fbForm')) $('#fbForm').onsubmit = e => {
   e.preventDefault(); radioMsg('Copy that. Feedback is with the engineers, fix coming.');
   const r = window._current, sym = [...document.querySelectorAll('#symp input:checked')].map(i => i.value);
   const sess = state.session === 'race' ? `Race ${state.length}` : state.session;
@@ -201,15 +224,16 @@ function splitWords(el){
   walk(el);
 }
 document.querySelectorAll('.split').forEach(splitWords);
-const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.15 });
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: 0.12 });
 document.querySelectorAll('[data-reveal], .split').forEach(el => el.closest('.hero') || io.observe(el));
 
-const MQ = 'Dry · Wet · Qualifying · Sprint · Race · <b>44</b> · Wheel · Pad · No TC · No ABS · ';
-$('#mq1').innerHTML = MQ.repeat(6); $('#mq2').innerHTML = 'Team radio · Box this lap · Tyres · Balance · <b>44</b> · Push now · '.repeat(6);
+if ($('#mq1')) {
+  $('#mq1').innerHTML = 'Dry · Wet · Qualifying · Sprint · Race · <b>44</b> · Wheel · Pad · No TC · No ABS · '.repeat(6);
+  $('#mq2').innerHTML = 'Team radio · Box this lap · Tyres · Balance · <b>44</b> · Push now · '.repeat(6);
+}
 
 let lastY = scrollY, vel = 0, career = -1, mq = 0, lastPass = 0, garageOn = false;
 const hud = Object.fromEntries([...document.querySelectorAll('#hud span')].map(s => [s.dataset.h, s]));
-const clamp = x => Math.max(0, Math.min(1, x));
 
 function loop(now){
   requestAnimationFrame(loop);
@@ -217,16 +241,15 @@ function loop(now){
   vel = vel * 0.85 + (y - lastY) * 60 * 0.15; lastY = y;
   // fast scroll flick → a real car passing (left to right), pitch follows how hard you flick
   if (Math.abs(vel) > 2600 && now - lastPass > 2400) { lastPass = now; sfx.passby(0.9 + Math.min(0.5, Math.abs(vel) / 9000), 0.45); }
-  const v = view(), inLab = v.a > 0.5 && v.b < 0.5;
-  if (inLab !== garageOn && sfx.garage(inLab) !== false) garageOn = inLab;
+  if (PAGE === 'home') { const v = view(), inLab = v.a > 0.5 && v.b < 0.5; if (inLab !== garageOn && sfx.garage(inLab) !== false) garageOn = inLab; }
   const p = clamp(y / Math.max(1, document.documentElement.scrollHeight - H));
   if (Math.abs(p - career) > 0.003) {
     career = p;   // teal → purple → red, same hue walk as the 3D accent
     document.documentElement.style.setProperty('--accent', `hsl(${Math.round(175 + 180 * p)} 85% 58%)`);
-    $('#rail b').style.top = p * 100 + '%';
+    if ($('#rail')) $('#rail b').style.top = p * 100 + '%';
     scene?.setCareer(p);
   }
-  if (!reduce) {
+  if (!reduce && $('#mq1')) {
     mq += 0.4 + Math.abs(vel) * 0.004;
     $('#mq1').style.transform = `translateX(${-(mq % 2000)}px)`;
     $('#mq2').style.transform = `translateX(${(mq % 2000) - 2000}px)`;
@@ -236,12 +259,12 @@ requestAnimationFrame(loop);
 
 function view(){
   // the car is framed inside #carSafe: the empty area between the panel's header and its legend
-  const H = innerHeight, top = $('#carpanel').getBoundingClientRect().top, fb = $('#feedback').getBoundingClientRect();
-  return { a: clamp((H - top) / (H * 0.7)), b: clamp((H * 0.85 - fb.top) / (H * 0.6)), panel: $('#carSafe').getBoundingClientRect(), vel };
+  const H = innerHeight, top = $('#carpanel').getBoundingClientRect().top, out = $('#outro').getBoundingClientRect();
+  return { a: clamp((H - top) / (H * 0.7)), b: clamp((H * 0.85 - out.top) / (H * 0.6)), panel: $('#carSafe').getBoundingClientRect(), vel };
 }
 function placeHud(f){
   const panel = $('#carSafe').getBoundingClientRect();
-  document.getElementById('hud').style.opacity = f.lab > 0.6 ? 1 : 0;
+  $('#hud').style.opacity = f.lab > 0.6 ? 1 : 0;
   for (const k in hud) {
     const [x, y] = f[k], inside = x > panel.left && x < panel.right && y > panel.top - 4 && y < panel.bottom + 4;
     hud[k].style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
@@ -249,13 +272,15 @@ function placeHud(f){
   }
 }
 
-// ---------------- sound + gate ----------------
+// ---------------- sound, radio captions, start gate ----------------
 const soundBtn = $('#sound');
 function setSound(on){
   sfx.enable(on); soundBtn.setAttribute('aria-pressed', on); $('#soundTxt').textContent = on ? 'Sound on' : 'Sound off';
   sfx.rain(on && state.weather === 'wet'); garageOn = false; if (!on) sfx.garage(false);
 }
 soundBtn.onclick = async () => { setSound(!sfx.on); if (sfx.on) { await sfx.ready(); sfx.shift(); } };
+// browsers only allow audio after a tap: if sound was on before, switch it back on at the first one
+if (sfx.wanted && PAGE !== 'home') addEventListener('pointerdown', e => { if (!soundBtn.contains(e.target) && !sfx.on) setSound(true); }, { once: true });
 
 // team-radio caption (no voices — lines are generic, written for this site)
 let radioT, radioSound = 0;
@@ -265,10 +290,12 @@ function radioMsg(text){
   clearTimeout(radioT); radioT = setTimeout(() => el.classList.remove('show'), 3800);
 }
 
+const SEEN = 'setuplab-gate';
+function heroIn(){ document.querySelectorAll('.hero .split, .hero [data-reveal]').forEach((el, i) => setTimeout(() => el.classList.add('in'), 150 + i * 110)); }
 async function enter(withSound){
   const gate = $('#gate'), dots = gate.querySelectorAll('.lights i'), done = () => {
-    gate.classList.add('gone');
-    document.querySelectorAll('.hero .split, .hero [data-reveal]').forEach((el, i) => setTimeout(() => el.classList.add('in'), 150 + i * 110));
+    gate.classList.add('gone'); heroIn();
+    try { sessionStorage.setItem(SEEN, '1'); } catch {}
     setTimeout(() => radioMsg('Radio check. Car is in the garage, setups loaded.'), 1400);
   };
   gate.querySelectorAll('button').forEach(b => b.disabled = true);
@@ -279,20 +306,35 @@ async function enter(withSound){
   dots.forEach((d, i) => setTimeout(() => { d.classList.add('on'); sfx.lights(); }, lead + i * 700));
   setTimeout(() => { dots.forEach(d => d.classList.remove('on')); sfx.launch(); done(); }, lead + 5 * 700 + 450);
 }
-$('#startSound').onclick = () => enter(true);
-$('#startQuiet').onclick = () => enter(false);
-$('#gate').addEventListener('keydown', e => e.key === 'Escape' && enter(false));
-(sfx.wanted ? $('#startSound') : $('#startQuiet')).focus();
+if (PAGE === 'home') {
+  let seen = false; try { seen = sessionStorage.getItem(SEEN) === '1'; } catch {}
+  if (seen) {                                   // coming back from another page: skip the start lights
+    $('#gate').classList.add('gone'); heroIn();
+    if (sfx.wanted) addEventListener('pointerdown', e => { if (!soundBtn.contains(e.target) && !sfx.on) setSound(true); }, { once: true });
+  } else {
+    $('#startSound').onclick = () => enter(true);
+    $('#startQuiet').onclick = () => enter(false);
+    $('#gate').addEventListener('keydown', e => e.key === 'Escape' && enter(false));
+    (sfx.wanted ? $('#startSound') : $('#startQuiet')).focus();
+  }
+}
 
 // ---------------- boot ----------------
-Promise.all(['setups.json', 'tracks/tracks.json'].map(u => fetch(u, { cache: 'no-cache' }).then(r => r.json()))).then(async ([d, tr]) => {
-  data = d; TR = tr; $('#upd').textContent = d.updated;
-  $('#stats').innerHTML = `<span><b>${d.tracks.length}</b> layouts</span><span><b>${d.tracks.length * 20}</b> setups</span><span><b>${d.log.length}</b> radio fixes</span><span>No TC · No ABS</span>`;
+const files = PAGE === 'credits' ? ['setups.json'] : ['setups.json', 'tracks/tracks.json'];
+Promise.all(files.map(u => fetch(u, { cache: 'no-cache' }).then(r => r.json()))).then(async ([d, tr]) => {
+  data = d; TR = tr || {}; $('#upd').textContent = d.updated;
+  if (PAGE === 'credits') { document.querySelectorAll('a[data-nav]').forEach(a => a.href = a.dataset.nav + location.hash); $('#rules').innerHTML = Object.entries(RULES).map(([c, t]) => `<li><code>${c}</code> ${esc(t)}</li>`).join(''); return; }
+  if ($('#stats')) $('#stats').innerHTML = `<span><b>${d.tracks.length}</b> layouts</span><span><b>${d.tracks.length * 20}</b> setups</span><span><b>${d.log.length}</b> radio fixes</span><span>No TC · No ABS</span>`;
   readHash(); buildControls();
-  try {
-    const { initScene } = await import('./scene.js');
-    scene = initScene({ canvas: $('#gl'), reduce, mobile, getView: view, onFrame: placeHud });
-  } catch (err) { console.warn('3D unavailable, using 2D car', err); document.body.classList.add('no3d'); }
-  update(); renderLog();
+  if (PAGE === 'home') {
+    // the sticky car panel sits just under the sticky selector bar, whatever its height (it wraps on narrow screens)
+    new ResizeObserver(([e]) => document.documentElement.style.setProperty('--ctrl', e.target.offsetHeight + 'px')).observe($('.controls'));
+    try {
+      const { initScene } = await import('./scene.js');
+      scene = initScene({ canvas: $('#gl'), reduce, mobile, getView: view, onFrame: placeHud });
+    } catch (err) { console.warn('3D unavailable, using 2D car', err); document.body.classList.add('no3d'); }
+  }
+  update();
+  if (PAGE === 'radio') { renderLog(); if (!mobile) $('#ranWrap').open = true; }   // phones: values folded so the form stays close
   addEventListener('hashchange', () => { readHash(); update(); });
-}).catch(() => { $('#groups').innerHTML = '<p class="empty">Could not load setups.json.</p>'; });
+}).catch(err => { console.warn(err); const g = $('#groups') || $('#ranSheet'); if (g) g.innerHTML = '<p class="empty">Could not load the setup data.</p>'; });
