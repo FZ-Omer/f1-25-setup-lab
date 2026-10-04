@@ -3,242 +3,309 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>F1 25 Setup Lab</title>
-<meta name="description" content="Sourced + derived F1 25 car setups for every track, session, race length, dry and wet, wheel and controller — tuned by driver feedback.">
+<meta name="color-scheme" content="dark">
+<title>F1 25 Setup Lab · 44 Fan Edition</title>
+<meta name="description" content="Sourced + derived F1 25 car setups for every track, session, race length, dry and wet, wheel and controller — tuned by driver feedback. Unofficial fan project.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,600;0,700;0,900;1,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 <style>
 :root{
-  --bg:#0a0b0e; --panel:#121419; --panel2:#181b22; --line:#262a33; --ink:#eef0f4; --mute:#8b93a3;
-  --red:#ff2a2a; --amber:#ffb020; --green:#2fd47a; --cyan:#38c6f4; --accent:var(--red);
-  --mono:'JetBrains Mono',ui-monospace,monospace; --ease:cubic-bezier(.2,.9,.2,1);
+  --bg:#07080b; --glass:rgba(14,16,22,.62); --glass2:rgba(22,25,33,.7); --line:rgba(255,255,255,.09); --ink:#f2f4f8; --mute:#949cad;
+  --accent:#19d3c5; --amber:#ffb020; --green:#2fd47a; --cyan:#4cc9ff; --silver:#c9ced6; --red:#ff2436;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --ease:cubic-bezier(.16,1,.3,1);
 }
-@media (prefers-color-scheme: light){
-  :root{ --bg:#f3f4f6; --panel:#fff; --panel2:#f7f8fa; --line:#dde1e7; --ink:#12141a; --mute:#5d6575;
-         --red:#d90a0a; --amber:#a86400; --green:#11804a; --cyan:#0a78a6; }
-}
-body.wet{ --accent:var(--cyan); }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Titillium Web',system-ui,sans-serif;overflow-x:hidden}
+html{background:var(--bg)}
+body{margin:0;background:transparent;color:var(--ink);font:16px/1.55 'Titillium Web',system-ui,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-h1,h2,h3{margin:0;line-height:1.1}
-h2{font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.04em}
-h2 small{display:block;font-size:13px;font-weight:600;color:var(--mute);letter-spacing:.02em;text-transform:none;margin-top:4px}
-section{padding:28px 0}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+h1,h2,h3{margin:0;line-height:1}
+section{position:relative;padding:72px 0}
+::selection{background:var(--accent);color:#000}
 
-/* ---- lights-out intro ---- */
-#lights{position:fixed;inset:0;z-index:50;background:#050506;display:grid;place-items:center;cursor:pointer;transition:opacity .45s, visibility .45s}
-#lights.gone{opacity:0;visibility:hidden}
-#lights .row{display:flex;gap:clamp(10px,3vw,22px)}
-#lights i{width:clamp(34px,9vw,64px);aspect-ratio:1;border-radius:50%;background:#2a0d0d;box-shadow:inset 0 0 0 4px #1a1a1a}
-#lights i.on{background:#ff1e1e;box-shadow:0 0 28px 6px rgba(255,30,30,.6),inset 0 0 0 4px #1a1a1a}
-#lights p{position:absolute;bottom:12vh;color:#666;font:600 13px var(--mono);letter-spacing:.2em}
+/* 3D layer + HUD */
+#gl{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block}
+body.no3d #gl,body.no3d #hud{display:none}
+body.no3d{background:radial-gradient(1200px 600px at 70% 10%,color-mix(in srgb,var(--accent) 14%,transparent),transparent),var(--bg)}
+#hud{position:fixed;inset:0;z-index:3;pointer-events:none;transition:opacity .2s}
+#hud span{position:absolute;left:0;top:0;font:700 13px var(--mono);padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.6);border:1px solid var(--line);white-space:nowrap;transform:translate(-50%,-50%)}
+#hud span small{display:block;font-size:9px;color:var(--mute);font-weight:500;letter-spacing:.08em}
+main,header,footer,.marquee{position:relative;z-index:2}
 
-/* ---- header ---- */
-header{position:relative;padding:36px 0 8px;overflow:hidden}
-header::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 38px,color-mix(in srgb,var(--accent) 7%,transparent) 38px 40px);animation:speed 1.6s linear infinite;mask:linear-gradient(90deg,transparent,#000 30%,#000 70%,transparent)}
-@keyframes speed{to{background-position:-90px 0}}
-.brand{position:relative;display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 22px}
-.brand h1{font-size:clamp(40px,9vw,84px);font-weight:900;letter-spacing:-.02em;font-style:italic;text-transform:uppercase}
-.brand h1 b{color:var(--accent);transition:color .4s}
-.brand p{margin:0 0 10px;color:var(--mute);max-width:420px}
-.stats{position:relative;display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.stats span{font:500 12px var(--mono);border:1px solid var(--line);border-radius:99px;padding:4px 10px;color:var(--mute)}
+/* career rail + sound */
+#rail{position:fixed;right:14px;top:30vh;height:40vh;width:3px;border-radius:3px;z-index:5;background:linear-gradient(var(--silver),#19d3c5 25%,#9a5cf5 60%,var(--red))}
+#rail b{position:absolute;left:50%;width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 14px var(--accent);transform:translate(-50%,-50%)}
+#rail span{position:absolute;right:10px;font:700 9px var(--mono);letter-spacing:.18em;color:var(--mute);writing-mode:vertical-rl}
+#rail span:first-of-type{top:0}#rail span:last-of-type{bottom:0}
+@media (max-width:760px){#rail{display:none}}
+#sound{position:fixed;right:16px;bottom:16px;z-index:20;display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:9px 14px;font:700 12px var(--mono);cursor:pointer}
+#sound .eq{display:flex;gap:2px;align-items:flex-end;height:14px}
+#sound .eq i{width:3px;height:3px;background:var(--accent);border-radius:2px}
+#sound[aria-pressed=true] .eq i{animation:eq .8s ease-in-out infinite alternate}
+#sound .eq i:nth-child(2){animation-delay:-.3s}#sound .eq i:nth-child(3){animation-delay:-.6s}#sound .eq i:nth-child(4){animation-delay:-.15s}
+@keyframes eq{from{height:3px}to{height:14px}}
+
+/* gate */
+#gate{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:radial-gradient(900px 500px at 50% 60%,#14161d,#030304);transition:opacity .8s var(--ease),visibility .8s}
+#gate.gone{opacity:0;visibility:hidden}
+#gate .in{text-align:center;padding:16px}
+.lights{display:flex;gap:clamp(10px,3vw,22px);justify-content:center;margin-bottom:34px}
+.lights i{width:clamp(36px,9vw,64px);aspect-ratio:1;border-radius:50%;background:#250a0c;box-shadow:inset 0 0 0 4px #17181c;transition:background .08s}
+.lights i.on{background:#ff1a1a;box-shadow:0 0 34px 8px rgba(255,26,26,.55),inset 0 0 0 4px #17181c}
+#gate h1{font-size:clamp(40px,10vw,96px);font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.02em}
+#gate h1 b{color:var(--accent)}
+#gate p{color:var(--mute);margin:10px 0 26px;font:600 12px var(--mono);letter-spacing:.2em;text-transform:uppercase}
+.btn{display:inline-flex;align-items:center;gap:8px;font:700 15px 'Titillium Web',system-ui,sans-serif;background:var(--accent);color:#04110f;border:0;border-radius:12px;padding:12px 20px;cursor:pointer;text-decoration:none;transition:transform .2s var(--ease),box-shadow .3s,background .4s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 45%,transparent)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+#gate .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* hero */
+.hero{min-height:100vh;display:flex;align-items:center;padding:90px 0 60px;background:linear-gradient(90deg,rgba(7,8,11,.85),rgba(7,8,11,.2) 55%,transparent)}
+@media (max-width:760px){.hero{align-items:flex-start;padding-top:70px;background:linear-gradient(180deg,rgba(7,8,11,.85),transparent 55%)}}
+.eyebrow{font:700 12px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+.hero h1{font-size:clamp(68px,15vw,184px);font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.035em;line-height:.86;margin:14px 0 18px}
+.hero h1 .o{color:transparent;-webkit-text-stroke:2px var(--ink)}
+.hero p{max-width:440px;color:#c3c9d4;font-size:18px;margin:0 0 22px}
+.hero .btns{display:flex;gap:10px;flex-wrap:wrap}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.stats span{font:500 12px var(--mono);border:1px solid var(--line);background:rgba(0,0,0,.35);border-radius:99px;padding:5px 11px;color:var(--mute)}
 .stats b{color:var(--ink)}
+.cue{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);font:600 11px var(--mono);letter-spacing:.2em;color:var(--mute);text-align:center}
+.cue i{display:block;width:1px;height:38px;margin:8px auto 0;background:linear-gradient(var(--accent),transparent);animation:cue 1.6s var(--ease) infinite}
+@keyframes cue{from{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}to{transform:scaleY(0);transform-origin:bottom}}
 
-/* ---- controls ---- */
-.controls{z-index:10;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 0}
-.tracks{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:thin;scroll-snap-type:x proximity}
-.tracks button{flex:0 0 auto;scroll-snap-align:start;background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 12px;text-align:left;cursor:pointer;font:inherit;position:relative;overflow:hidden}
+/* word reveals */
+.split .w{display:inline-block;overflow:hidden;vertical-align:bottom}
+.split .w>span{display:inline-block;transform:translateY(105%);transition:transform 1s var(--ease);transition-delay:calc(var(--i) * 70ms)}
+.split.in .w>span{transform:none}
+[data-reveal]{opacity:0;transform:translateY(34px);filter:blur(8px);transition:opacity 1s var(--ease),transform 1s var(--ease),filter 1s var(--ease)}
+[data-reveal].in{opacity:1;transform:none;filter:none}
+
+/* marquee */
+.marquee{overflow:hidden;padding:18px 0;border-block:1px solid var(--line);background:rgba(7,8,11,.55)}
+.marquee div{white-space:nowrap;font:900 italic clamp(40px,7vw,86px)/1 'Titillium Web';text-transform:uppercase;color:transparent;-webkit-text-stroke:1.2px color-mix(in srgb,var(--accent) 80%,#fff);will-change:transform}
+.marquee div b{color:var(--accent);-webkit-text-stroke:0}
+
+/* section titles */
+.title{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:22px}
+.title h2{font-size:clamp(40px,7vw,80px);font-weight:900;font-style:italic;text-transform:uppercase;letter-spacing:-.02em}
+.title p{color:var(--mute);max-width:420px;margin:0}
+.glass{background:var(--glass);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border:1px solid var(--line);border-radius:18px}
+
+/* controls */
+.controls{z-index:10;padding:10px 0;margin-bottom:18px}
+@media (min-width:920px){.controls{position:sticky;top:0;background:linear-gradient(rgba(7,8,11,.92),rgba(7,8,11,.75));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}}
+.tracks{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:thin;scroll-snap-type:x proximity}
+.tracks button{flex:0 0 auto;scroll-snap-align:start;background:var(--glass2);border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:7px 14px 8px;text-align:left;cursor:pointer;font:inherit;position:relative;overflow:hidden;transition:transform .3s var(--ease),border-color .3s}
+.tracks button:hover{transform:translateY(-2px)}
+.tracks button em{font:700 10px var(--mono);font-style:normal;color:var(--accent);letter-spacing:.1em;display:block}
 .tracks button small{display:block;color:var(--mute);font-size:11px;line-height:1.2}
-.tracks button::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
-.tracks button[aria-pressed=true]{border-color:var(--accent)}
+.tracks button::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.tracks button[aria-pressed=true]{border-color:var(--accent);box-shadow:0 0 24px color-mix(in srgb,var(--accent) 25%,transparent)}
 .tracks button[aria-pressed=true]::after{transform:scaleX(1)}
-.toggles{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
-.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;border:1px solid var(--line);border-radius:10px;padding:3px;background:var(--panel);margin:0}
+.toggles{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.seg{display:inline-flex;flex-wrap:wrap;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:3px;background:var(--glass2);margin:0;position:relative}
 .seg legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .seg input{position:absolute;opacity:0;pointer-events:none}
-.seg label{padding:5px 12px;border-radius:7px;cursor:pointer;font-weight:600;font-size:14px;color:var(--mute);transition:background .25s,color .25s;white-space:nowrap}
-.seg input:checked+label{background:var(--accent);color:#fff}
+.seg label{padding:6px 13px;border-radius:9px;cursor:pointer;font-weight:700;font-size:14px;color:var(--mute);transition:background .3s,color .3s;white-space:nowrap}
+.seg input:checked+label{background:var(--accent);color:#05100f}
+#weatherSeg input#weather-wet:checked+label{background:var(--cyan)}
 .seg input:focus-visible+label{outline:2px solid var(--ink);outline-offset:1px}
-#lengthSeg{transition:opacity .3s, transform .3s var(--ease)}
+#lengthSeg{transition:opacity .3s,transform .4s var(--ease)}
 #lengthSeg[hidden]{display:inline-flex;opacity:.25;pointer-events:none;transform:translateX(-6px)}
 
-/* ---- stage ---- */
+/* stage */
 .stage{display:grid;gap:16px;grid-template-columns:1fr}
-@media (min-width:920px){.stage{grid-template-columns:340px 1fr}}
-.carpanel{position:relative;padding:14px;overflow:hidden;align-self:start}
-@media (min-width:920px){.controls{position:sticky;top:0}.carpanel{position:sticky;top:132px}}
-.carpanel h3{font-size:30px;font-weight:900;font-style:italic;text-transform:uppercase}
+@media (min-width:920px){.stage{grid-template-columns:380px 1fr}}
+.carpanel{position:relative;min-height:540px;padding:16px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(rgba(7,8,11,.78),rgba(7,8,11,.05) 26%,rgba(7,8,11,.05) 80%,rgba(7,8,11,.8));display:flex;flex-direction:column;align-self:start}
+@media (min-width:920px){.carpanel{position:sticky;top:150px;height:calc(100vh - 170px);max-height:720px}}
+@media (max-width:919px){.carpanel{min-height:600px}}
+@media (max-width:760px){#hud span{font-size:11px;padding:2px 5px}#hud span small{font-size:8px}}
+.carpanel h3{font-size:34px;font-weight:900;font-style:italic;text-transform:uppercase}
 .carpanel .circ{color:var(--mute);font-size:14px}
+.carpanel .legend{margin-top:auto}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
-.chip{font:700 11px var(--mono);padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.chip{font:700 11px var(--mono);padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mute);white-space:nowrap;background:rgba(0,0,0,.3)}
 .chip.amber{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
 .chip.green{color:var(--green);border-color:color-mix(in srgb,var(--green) 45%,transparent)}
-.chip.acc{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
-svg.car{width:100%;max-width:300px;display:block;margin:0 auto}
-.car .body{fill:var(--panel2);stroke:var(--line);stroke-width:2}
-.car .zone{transition:fill .3s,stroke .3s,filter .3s}
-.car .wing{fill:color-mix(in srgb,var(--ink) 22%,var(--panel))}
-.car .arm{stroke:var(--mute);stroke-width:3;stroke-linecap:round}
-.car .tyre{stroke:var(--heat,#000);stroke-width:2.5}
-.car .disc{fill:var(--mute)}
-.car .diff{fill:var(--mute)}
-.car .lbl{font:700 13px var(--mono);fill:var(--ink)}
-.car .lbl.m{fill:var(--mute);font-size:10px;font-weight:500}
-.car .hot .wing,.car .hot .disc,.car .hot.diff{fill:var(--accent);filter:drop-shadow(0 0 6px var(--accent))}
-.car .hot .arm{stroke:var(--accent);filter:drop-shadow(0 0 4px var(--accent))}
-.car .hot .tyre,.car .tyre.hot{stroke:var(--accent);stroke-width:3}
-.flow path{fill:none;stroke:var(--accent);stroke-width:1.4;stroke-dasharray:6 22;opacity:.35;animation:flow var(--flow,1.2s) linear infinite}
-@keyframes flow{to{stroke-dashoffset:-56}}
-.rain{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s;background:repeating-linear-gradient(105deg,transparent 0 14px,color-mix(in srgb,var(--cyan) 30%,transparent) 14px 15px);background-size:100% 120px;animation:rain .45s linear infinite}
-body.wet .rain{opacity:.55}
-@keyframes rain{to{background-position:-16px 120px}}
+.chip.acc{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 50%,transparent)}
+.chip.wx{color:var(--cyan);border-color:color-mix(in srgb,var(--cyan) 50%,transparent)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mute)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hint3d{font:500 11px var(--mono);color:var(--mute);margin:4px 0 0}
+/* 2D fallback car (only when WebGL is unavailable) */
+svg.car{display:none;width:100%;max-width:280px;margin:8px auto}
+body.no3d svg.car{display:block}body.no3d .hint3d{display:none}
+.car .body{fill:#181b22;stroke:var(--line);stroke-width:2}
+.car .wing{fill:#3a3f4a}.car .arm{stroke:var(--mute);stroke-width:3;stroke-linecap:round}
+.car .tyre{fill:#15171c;stroke:var(--heat,#000);stroke-width:2.5}.car .disc,.car .diff{fill:var(--mute)}
+.car .lbl{font:700 13px var(--mono);fill:var(--ink)}.car .lbl.m{fill:var(--mute);font-size:10px;font-weight:500}
+.car .hot .wing,.car .hot .disc,.car .hot.diff{fill:var(--accent)}.car .hot .arm{stroke:var(--accent)}.car .tyre.hot{stroke:var(--accent);stroke-width:4}
 
-.sheet{padding:6px 16px 16px}
-.sheet .head{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:12px 0 4px}
-.group{margin-top:14px}
-.group h4{margin:0 0 4px;font:700 12px var(--mono);letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
-.rowp{display:grid;grid-template-columns:minmax(118px,1.1fr) 2fr 72px 64px;gap:10px;align-items:center;padding:7px 8px;border-radius:8px;cursor:default;transition:background .2s}
-.rowp:hover,.rowp:focus-visible,.rowp.sel{background:var(--panel2);outline:none}
+.sheet{padding:8px 18px 18px}
+.sheet .head{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:12px 0 2px}
+.sheet h3{font-size:26px;font-weight:900;font-style:italic;text-transform:uppercase}
+.sheet .sub{color:var(--mute);font-size:14px;margin-top:4px}
+.group{margin-top:16px}
+.group h4{margin:0 0 4px;font:700 11px var(--mono);letter-spacing:.18em;color:var(--mute);text-transform:uppercase}
+.rowp{display:grid;grid-template-columns:minmax(120px,1.1fr) 2fr 74px 66px;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;transition:background .25s}
+.rowp:hover,.rowp:focus-visible{background:rgba(255,255,255,.05);outline:none}
 .rowp .n{font-weight:600;font-size:14px;line-height:1.2}
 .rowp .n small{display:block;color:var(--mute);font:500 10px var(--mono)}
-.bar{position:relative;height:8px;border-radius:99px;background:var(--line);overflow:visible}
-.bar .fill{position:absolute;inset:0;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 40%,transparent),var(--accent));transform-origin:left;transform:scaleX(0);transition:transform .75s var(--ease),background .4s}
-.bar .base{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);opacity:.55;transition:left .75s var(--ease)}
+.bar{position:relative;height:6px;border-radius:99px;background:rgba(255,255,255,.08)}
+.bar .fill{position:absolute;inset:0;border-radius:99px;background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 25%,transparent),var(--accent));transform-origin:left;transform:scaleX(0);transition:transform .9s var(--ease);box-shadow:0 0 12px color-mix(in srgb,var(--accent) 40%,transparent)}
+.bar .base{position:absolute;top:-5px;width:2px;height:16px;background:#fff;opacity:.6;transition:left .9s var(--ease)}
 .val{font:700 16px var(--mono);text-align:right;font-variant-numeric:tabular-nums}
 .tag{justify-self:end}
-.rowp.changed .val{color:var(--amber)}
-.rowp.tuned .val{color:var(--green)}
+.rowp.changed .val{color:var(--amber)}.rowp.tuned .val{color:var(--green)}
 @media (max-width:560px){
   .rowp{grid-template-columns:1fr 70px 56px;grid-template-areas:"n v t" "b b b";row-gap:6px}
   .rowp .n{grid-area:n}.rowp .bar{grid-area:b}.rowp .val{grid-area:v}.rowp .tag{grid-area:t}
 }
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mute)}
-.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.notes{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px}
-.notes li{padding:10px 12px;border-left:3px solid var(--accent);background:var(--panel2);border-radius:0 8px 8px 0;font-size:14px}
-.reveal{animation:rise .55s var(--ease) both}
+.notes{margin:18px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.notes li{padding:11px 13px;border-left:3px solid var(--accent);background:rgba(255,255,255,.04);border-radius:0 10px 10px 0;font-size:14px;animation:rise .7s var(--ease) both}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}}
 
-/* ---- feedback ---- */
+/* feedback */
 .fb{display:grid;gap:16px;grid-template-columns:1fr}
-@media (min-width:920px){.fb{grid-template-columns:1.2fr 1fr}}
-.form{padding:16px}
+@media (min-width:920px){.fb{grid-template-columns:1.25fr 1fr}}
+.form{padding:18px}
+.radio{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.radio .wave{display:flex;gap:3px;align-items:center;height:22px}
+.radio .wave i{width:3px;height:6px;border-radius:2px;background:var(--accent);animation:eq 1s ease-in-out infinite alternate}
+.radio .wave i:nth-child(odd){animation-delay:-.4s}.radio .wave i:nth-child(3n){animation-delay:-.7s}
 .symp{display:flex;flex-wrap:wrap;gap:6px;border:0;padding:0;margin:8px 0 14px}
-.symp legend{font:700 12px var(--mono);letter-spacing:.12em;color:var(--mute);text-transform:uppercase;margin-bottom:6px}
+.symp legend{font:700 11px var(--mono);letter-spacing:.16em;color:var(--mute);text-transform:uppercase;margin-bottom:8px}
 .symp input{position:absolute;opacity:0}
-.symp label{border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-size:13px;cursor:pointer;transition:all .2s}
-.symp input:checked+label{background:var(--accent);border-color:var(--accent);color:#fff}
+.symp label{border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13px;cursor:pointer;transition:all .25s var(--ease);background:rgba(0,0,0,.25)}
+.symp label:hover{border-color:var(--accent)}
+.symp input:checked+label{background:var(--accent);border-color:var(--accent);color:#05100f;font-weight:700}
 .symp input:focus-visible+label{outline:2px solid var(--ink)}
 .fields{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+@media (max-width:560px){.fields{grid-template-columns:1fr}}
 .fields label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
 .fields .full{grid-column:1/-1}
-input[type=text],select,textarea{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+input[type=text],select,textarea{font:inherit;color:var(--ink);background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:10px;padding:9px 11px;width:100%}
 textarea{min-height:84px;resize:vertical}
-.btn{margin-top:14px;font:700 15px 'Titillium Web';background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 18px;cursor:pointer;transition:transform .15s,box-shadow .2s}
-.btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px color-mix(in srgb,var(--accent) 45%,transparent)}
-.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-.hint{font-size:12px;color:var(--mute);margin:8px 0 0}
-.log{padding:16px;display:grid;gap:10px;align-content:start}
-.log h3{font-size:15px;text-transform:uppercase;letter-spacing:.06em}
-.entry{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.hint{font-size:12px;color:var(--mute);margin:10px 0 0}
+.log{padding:18px;display:grid;gap:10px;align-content:start}
+.log h3{font:700 12px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+.entry{border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:14px;background:rgba(0,0,0,.25)}
 .entry .meta{font:500 11px var(--mono);color:var(--mute)}
 .empty{color:var(--mute);font-size:14px}
-.method ol{padding-left:20px}
-.method li{margin:6px 0}
+.method .glass{padding:20px}
+.method ol{padding-left:20px}.method li{margin:7px 0}
 .method code{font:700 12px var(--mono);color:var(--amber)}
-footer{padding:24px 0 40px;color:var(--mute);font-size:13px;border-top:1px solid var(--line)}
+.credits{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:14px}
+.credits div{border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;background:rgba(0,0,0,.25)}
+.credits b{display:block;font:700 11px var(--mono);letter-spacing:.12em;color:var(--accent);text-transform:uppercase;margin-bottom:4px}
+footer{position:relative;z-index:2;padding:28px 0 90px;color:var(--mute);font-size:13px;border-top:1px solid var(--line);background:rgba(7,8,11,.85)}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
+  [data-reveal]{opacity:1;transform:none;filter:none}.split .w>span{transform:none}
 }
 </style>
 </head>
 <body>
-<div id="lights" role="button" aria-label="Skip intro" tabindex="0"><div class="row"><i></i><i></i><i></i><i></i><i></i></div><p>LIGHTS OUT…</p></div>
+<canvas id="gl" aria-hidden="true"></canvas>
+<div id="hud" aria-hidden="true" style="opacity:0">
+  <span data-h="fw"></span><span data-h="rw"></span><span data-h="tfl"></span><span data-h="tfr"></span><span data-h="trl"></span><span data-h="trr"></span>
+</div>
+<div id="rail" aria-hidden="true"><b></b><span>SILVER ERA</span><span>RED ERA</span></div>
+<button id="sound" type="button" aria-pressed="false"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="soundTxt">Sound off</span></button>
 
-<header>
-  <div class="wrap">
-    <div class="brand">
-      <h1>Setup <b>Lab</b></h1>
-      <p>F1 25 car setups for every track — qualifying, sprint, race short / medium / full, dry &amp; wet, wheel &amp; controller. Tuned from your driver feedback.</p>
+<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="in">
+    <div class="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <h1 id="gateTitle">Setup <b>Lab</b></h1>
+    <p>F1 25 · 44 fan edition</p>
+    <div class="btns">
+      <button class="btn" id="startSound" type="button">Start engine · sound on</button>
+      <button class="btn ghost" id="startQuiet" type="button">Enter quietly</button>
     </div>
-    <div class="stats" id="stats"></div>
   </div>
+</div>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow" data-reveal>F1 25 · 44 fan edition</div>
+    <h1 class="split" id="heroTitle">Setup <span class="o">Lab</span></h1>
+    <p data-reveal>Every track. Qualifying, sprint and race at three lengths. Dry and wet, wheel and pad — built for No TC, No ABS, then tuned from your own driver feedback.</p>
+    <div class="btns" data-reveal>
+      <a class="btn" href="#lab">Enter the garage ↓</a>
+      <a class="btn ghost" href="#feedback">Radio the pit wall</a>
+    </div>
+    <div class="stats" id="stats" data-reveal></div>
+  </div>
+  <div class="cue" aria-hidden="true">SCROLL<i></i></div>
 </header>
 
-<nav class="controls" aria-label="Setup selector">
-  <div class="wrap">
-    <div class="tracks" id="tracks"></div>
-    <div class="toggles">
-      <fieldset class="seg" id="weatherSeg"><legend>Weather</legend></fieldset>
-      <fieldset class="seg" id="sessionSeg"><legend>Session</legend></fieldset>
-      <fieldset class="seg" id="lengthSeg"><legend>Race length</legend></fieldset>
-      <fieldset class="seg" id="inputSeg"><legend>Input</legend></fieldset>
+<div class="marquee" aria-hidden="true"><div id="mq1"></div></div>
+
+<main>
+  <section id="lab">
+    <div class="wrap title">
+      <h2 class="split">The Lab</h2>
+      <p data-reveal>Pick a track and conditions. Hover any setting to light up the part it changes on the car.</p>
     </div>
-  </div>
-</nav>
-
-<main class="wrap">
-  <section class="stage">
-    <aside class="panel carpanel">
-      <div class="rain"></div>
-      <h3 id="tName">—</h3>
-      <div class="circ" id="tCirc"></div>
-      <div class="chips" id="carChips"></div>
-      <svg class="car" viewBox="0 0 320 500" role="img" aria-label="Top-down car diagram; highlights the part each setting changes">
-        <defs>
-          <pattern id="tread" width="10" height="8" patternUnits="userSpaceOnUse">
-            <rect width="10" height="8" fill="#1b1d22"/><rect y="0" width="10" height="2" fill="#2c2f36"/>
-            <animateTransform attributeName="patternTransform" type="translate" from="0 0" to="0 8" dur=".35s" repeatCount="indefinite"/>
-          </pattern>
-        </defs>
-        <g class="flow" aria-hidden="true">
-          <path d="M70 0 C 60 160, 40 300, 40 500"/><path d="M110 0 C 108 180, 100 330, 96 500"/>
-          <path d="M160 0 V 500"/><path d="M210 0 C 212 180, 220 330, 224 500"/><path d="M250 0 C 260 160, 280 300, 280 500"/>
-        </g>
-        <g transform="translate(40 26)">
-          <g class="zone" id="z-fsus"><line class="arm" x1="56" y1="100" x2="104" y2="104"/><line class="arm" x1="56" y1="124" x2="104" y2="128"/><line class="arm" x1="184" y1="100" x2="136" y2="104"/><line class="arm" x1="184" y1="124" x2="136" y2="128"/></g>
-          <g class="zone" id="z-rsus"><line class="arm" x1="54" y1="350" x2="98" y2="350"/><line class="arm" x1="54" y1="376" x2="98" y2="372"/><line class="arm" x1="186" y1="350" x2="142" y2="350"/><line class="arm" x1="186" y1="376" x2="142" y2="372"/></g>
-          <path class="body" d="M110 28 h20 l9 112 h22 q14 0 16 22 l6 150 q0 34 -26 46 l-8 22 h-58 l-8 -22 q-26 -12 -26 -46 l6 -150 q2 -22 16 -22 h22 z"/>
-          <ellipse class="body" cx="120" cy="214" rx="15" ry="26"/>
-          <path d="M104 196 q16 -22 32 0" fill="none" stroke="var(--mute)" stroke-width="4" stroke-linecap="round"/>
-          <rect class="body" x="110" y="252" width="20" height="62" rx="9"/>
-          <g class="zone" id="z-fw"><rect class="wing" x="16" y="14" width="208" height="14" rx="3"/><rect class="wing" x="12" y="8" width="7" height="26" rx="2"/><rect class="wing" x="221" y="8" width="7" height="26" rx="2"/></g>
-          <g class="zone" id="z-rw"><rect class="wing" x="54" y="414" width="132" height="18" rx="3"/><rect class="wing" x="48" y="404" width="7" height="34" rx="2"/><rect class="wing" x="185" y="404" width="7" height="34" rx="2"/></g>
-          <rect class="tyre zone" id="z-tfl" x="20" y="82" width="36" height="62" rx="9" fill="url(#tread)"/>
-          <rect class="tyre zone" id="z-tfr" x="184" y="82" width="36" height="62" rx="9" fill="url(#tread)"/>
-          <rect class="tyre zone" id="z-trl" x="12" y="326" width="42" height="74" rx="10" fill="url(#tread)"/>
-          <rect class="tyre zone" id="z-trr" x="186" y="326" width="42" height="74" rx="10" fill="url(#tread)"/>
-          <g class="zone" id="z-brk"><circle class="disc" cx="38" cy="113" r="6"/><circle class="disc" cx="202" cy="113" r="6"/><circle class="disc" cx="33" cy="363" r="7"/><circle class="disc" cx="207" cy="363" r="7"/></g>
-          <circle class="zone diff" id="z-diff" cx="120" cy="362" r="10"/>
-        </g>
-        <text class="lbl" x="160" y="16" text-anchor="middle" id="lFW"></text>
-        <text class="lbl" x="160" y="490" text-anchor="middle" id="lRW"></text>
-        <text class="lbl" x="6" y="98" id="lFL"></text><text class="lbl m" x="6" y="112">FL psi</text>
-        <text class="lbl" x="314" y="98" text-anchor="end" id="lFR"></text><text class="lbl m" x="314" y="112" text-anchor="end">FR psi</text>
-        <text class="lbl" x="6" y="446" id="lRL"></text><text class="lbl m" x="6" y="460">RL psi</text>
-        <text class="lbl" x="314" y="446" text-anchor="end" id="lRR"></text><text class="lbl m" x="314" y="460" text-anchor="end">RR psi</text>
-      </svg>
-      <div class="legend"><span><i style="background:var(--ink);opacity:.55"></i>published base</span><span><i style="background:var(--amber)"></i>derived</span><span><i style="background:var(--green)"></i>tuned by feedback</span></div>
-    </aside>
-
-    <div class="panel sheet">
-      <div class="head"><h2 id="sheetTitle">Setup<small id="sheetSub"></small></h2><div class="chips" id="sheetChips"></div></div>
-      <div id="groups"></div>
-      <ul class="notes" id="notes"></ul>
+    <nav class="controls" aria-label="Setup selector">
+      <div class="wrap">
+        <div class="tracks" id="tracks"></div>
+        <div class="toggles">
+          <fieldset class="seg" id="weatherSeg"><legend>Weather</legend></fieldset>
+          <fieldset class="seg" id="sessionSeg"><legend>Session</legend></fieldset>
+          <fieldset class="seg" id="lengthSeg"><legend>Race length</legend></fieldset>
+          <fieldset class="seg" id="inputSeg"><legend>Input</legend></fieldset>
+        </div>
+      </div>
+    </nav>
+    <div class="wrap stage">
+      <aside class="carpanel" id="carpanel">
+        <h3 id="tName">—</h3>
+        <div class="circ" id="tCirc"></div>
+        <div class="chips" id="carChips"></div>
+        <p class="hint3d">LIVE 3D · wings, ride height &amp; tyre heat follow the setup</p>
+        <svg class="car" viewBox="0 0 320 500" role="img" aria-label="Top-down car diagram; highlights the part each setting changes">
+          <g transform="translate(40 26)">
+            <g id="z-fsus"><line class="arm" x1="56" y1="100" x2="104" y2="104"/><line class="arm" x1="56" y1="124" x2="104" y2="128"/><line class="arm" x1="184" y1="100" x2="136" y2="104"/><line class="arm" x1="184" y1="124" x2="136" y2="128"/></g>
+            <g id="z-rsus"><line class="arm" x1="54" y1="350" x2="98" y2="350"/><line class="arm" x1="54" y1="376" x2="98" y2="372"/><line class="arm" x1="186" y1="350" x2="142" y2="350"/><line class="arm" x1="186" y1="376" x2="142" y2="372"/></g>
+            <path class="body" d="M110 28 h20 l9 112 h22 q14 0 16 22 l6 150 q0 34 -26 46 l-8 22 h-58 l-8 -22 q-26 -12 -26 -46 l6 -150 q2 -22 16 -22 h22 z"/>
+            <g id="z-fw"><rect class="wing" x="16" y="14" width="208" height="14" rx="3"/></g>
+            <g id="z-rw"><rect class="wing" x="54" y="414" width="132" height="18" rx="3"/></g>
+            <rect class="tyre" id="z-tfl" x="20" y="82" width="36" height="62" rx="9"/><rect class="tyre" id="z-tfr" x="184" y="82" width="36" height="62" rx="9"/>
+            <rect class="tyre" id="z-trl" x="12" y="326" width="42" height="74" rx="10"/><rect class="tyre" id="z-trr" x="186" y="326" width="42" height="74" rx="10"/>
+            <g id="z-brk"><circle class="disc" cx="38" cy="113" r="6"/><circle class="disc" cx="202" cy="113" r="6"/><circle class="disc" cx="33" cy="363" r="7"/><circle class="disc" cx="207" cy="363" r="7"/></g>
+            <circle class="diff" id="z-diff" cx="120" cy="362" r="10"/>
+          </g>
+          <text class="lbl" x="160" y="16" text-anchor="middle" id="lFW"></text><text class="lbl" x="160" y="490" text-anchor="middle" id="lRW"></text>
+          <text class="lbl" x="6" y="98" id="lFL"></text><text class="lbl" x="314" y="98" text-anchor="end" id="lFR"></text>
+          <text class="lbl" x="6" y="446" id="lRL"></text><text class="lbl" x="314" y="446" text-anchor="end" id="lRR"></text>
+        </svg>
+        <div class="legend"><span><i style="background:#fff;opacity:.6"></i>published base</span><span><i style="background:var(--amber)"></i>derived</span><span><i style="background:var(--green)"></i>tuned by feedback</span></div>
+      </aside>
+      <div class="glass sheet">
+        <div class="head"><div><h3>Setup sheet</h3><div class="sub" id="sheetSub"></div></div><div class="chips" id="sheetChips"></div></div>
+        <div id="groups"></div>
+        <ul class="notes" id="notes"></ul>
+      </div>
     </div>
   </section>
 
+  <div class="marquee" aria-hidden="true"><div id="mq2"></div></div>
+
   <section id="feedback">
-    <h2>Driver feedback<small>Felt oversteer, understeer, uneven tyre wear? Log it — I'll read it, post the fix as a reply, and update this setup.</small></h2>
-    <div class="fb" style="margin-top:16px">
-      <form class="panel form" id="fbForm">
-        <div class="chips" id="fbCtx"></div>
+    <div class="wrap title">
+      <h2 class="split">Team Radio</h2>
+      <p data-reveal>Felt oversteer, understeer or uneven tyre wear? Radio it in. I read it, reply with the fix and update this setup.</p>
+    </div>
+    <div class="wrap fb">
+      <form class="glass form" id="fbForm" data-reveal>
+        <div class="radio"><div class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="chips" id="fbCtx" style="margin:0"></div></div>
         <fieldset class="symp" id="symp"><legend>What did the car do?</legend></fieldset>
         <div class="fields">
           <label>Corner speed<select id="fbSpeed"><option>All corners</option><option>Slow corners</option><option>Medium corners</option><option>High-speed corners</option></select></label>
@@ -247,10 +314,10 @@ footer{padding:24px 0 40px;color:var(--mute);font-size:13px;border-top:1px solid
           <label>Best lap (optional)<input type="text" id="fbLap" placeholder="1:29.412"></label>
           <label class="full">Notes<textarea id="fbNotes" placeholder="Wear % at end of stint, when it starts, what you already tried…"></textarea></label>
         </div>
-        <button class="btn" id="fbSend" type="submit" disabled>Send to GitHub →</button>
-        <p class="hint">Opens a pre-filled GitHub issue (you're the repo owner, so just hit <b>Create</b>). Then tell Claude "check my F1 feedback".</p>
+        <button class="btn" id="fbSend" type="submit" disabled style="margin-top:14px">Send to the pit wall (GitHub) →</button>
+        <p class="hint">Opens a pre-filled GitHub issue — hit <b>Create</b>, then tell Claude "check my F1 feedback".</p>
       </form>
-      <div class="panel log">
+      <div class="glass log" data-reveal>
         <h3>Waiting for a fix</h3><div id="pending" class="empty">Checking GitHub…</div>
         <h3 style="margin-top:8px">Tuning log</h3><div id="log"></div>
       </div>
@@ -258,190 +325,37 @@ footer{padding:24px 0 40px;color:var(--mute);font-size:13px;border-top:1px solid
   </section>
 
   <section class="method" id="method">
-    <h2>How these setups are built<small>Read this before trusting a number.</small></h2>
-    <div class="panel" style="padding:16px;margin-top:16px">
-      <p><b>Base:</b> one published dry and one published wet setup per track from GIGA's "F1 25: Trocken- und Regen-Setups für alle Strecken" (Oct 2025), which says it draws on the author's own testing plus SimRacingSetup and F1Laps. The article does not say whether they are race or qualifying setups — here they are used as the <b>qualifying baseline</b>. Extracted twice and cross-checked; two mismatches were re-read from the source.</p>
-      <p><b>Everything else is derived</b> with the rules below. The <i>direction</i> of every rule comes from a source; the <i>size</i> of each step is my heuristic — your feedback is what calibrates them.</p>
-      <ol id="rules"></ol>
-      <p><b>Known gaps:</b> no published reverse-layout setups; GIGA's Qatar wet lists uneven rear pressures (RR 22.6 / RL 24.0, kept as published, possibly a typo); patches after Oct 2025 may have shifted the meta; I couldn't confirm F1 25's exact sprint parc fermé rule.</p>
-      <p><b>Sources:</b>
-        <a href="https://www.giga.de/games/f1-25-trocken-und-regen-setups-fuer-alle-strecken--01JWZX7QFT20S5FHGSAP1FBYQV">GIGA – F1 25 setups (Marco Tito Aronica, 1 Oct 2025)</a> ·
-        <a href="https://help.ea.com/en/articles/f1/f1-25/car-setups-guide/">EA Help – F1 25 car setups guide</a> ·
-        <a href="https://traxion.gg/f1-25-setup-guide/">Traxion – F1 25 setup guide (Ross McGregor, Jun 2025)</a> ·
-        <a href="https://www.f1laps.com/blog/f1-25-controller-settings/">F1Laps – F1 25 controller settings</a> ·
-        <a href="https://racinggames.gg/article/f1-22-setup-tips-from-a-sim-racing-pro">RacingGames.gg – setup tips from a sim pro (Nathan Tague, F1 22)</a>
-      </p>
+    <div class="wrap title">
+      <h2 class="split">How it's built</h2>
+      <p data-reveal>Read this before trusting a number.</p>
+    </div>
+    <div class="wrap">
+      <div class="glass" data-reveal>
+        <p><b>Base:</b> one published dry and one published wet setup per track from GIGA's "F1 25: Trocken- und Regen-Setups für alle Strecken" (Oct 2025), which draws on the author's own testing plus SimRacingSetup and F1Laps. The article doesn't say if they're race or qualifying setups — here they're the <b>qualifying baseline</b>. Extracted twice and cross-checked.</p>
+        <p><b>Everything else is derived</b> with the rules below. The <i>direction</i> of every rule comes from a source; the <i>size</i> of each step is my heuristic — your feedback calibrates them.</p>
+        <ol id="rules"></ol>
+        <p><b>Known gaps:</b> no published reverse-layout setups; GIGA's Qatar wet lists uneven rear pressures (RR 22.6 / RL 24.0, kept as published); patches after Oct 2025 may have shifted the meta; F1 25's exact sprint parc fermé rule not confirmed.</p>
+        <p><b>Sources:</b>
+          <a href="https://www.giga.de/games/f1-25-trocken-und-regen-setups-fuer-alle-strecken--01JWZX7QFT20S5FHGSAP1FBYQV">GIGA – F1 25 setups (Marco Tito Aronica, 1 Oct 2025)</a> ·
+          <a href="https://help.ea.com/en/articles/f1/f1-25/car-setups-guide/">EA Help – F1 25 car setups guide</a> ·
+          <a href="https://traxion.gg/f1-25-setup-guide/">Traxion – F1 25 setup guide (Ross McGregor, Jun 2025)</a> ·
+          <a href="https://www.f1laps.com/blog/f1-25-controller-settings/">F1Laps – F1 25 controller settings</a> ·
+          <a href="https://racinggames.gg/article/f1-22-setup-tips-from-a-sim-racing-pro">RacingGames.gg – setup tips from a sim pro (Nathan Tague, F1 22)</a></p>
+        <div class="credits">
+          <div><b>3D engine</b><a href="https://github.com/mrdoob/three.js">three.js</a> r186 — MIT licence, self-hosted with its licence file in <code>vendor/</code>.</div>
+          <div><b>3D car</b>Original generic car modelled in code for this site. No downloaded models, no team designs.</div>
+          <div><b>Sound</b>Every sound is synthesised live with the Web Audio API. No recordings or samples.</div>
+          <div><b>Type</b>Titillium Web &amp; JetBrains Mono — SIL Open Font Licence 1.1, via Google Fonts.</div>
+          <div><b>Imagery</b>No photos, logos, signatures or quotes of any real person or team are used.</div>
+        </div>
+      </div>
     </div>
   </section>
 </main>
 
-<footer><div class="wrap">Unofficial fan tool — not affiliated with EA, Codemasters or Formula 1. Data updated <span id="upd"></span>.</div></footer>
+<footer><div class="wrap">Unofficial fan project — not affiliated with or endorsed by Lewis Hamilton, any Formula 1 team, Formula 1, EA or Codemasters. Names are used only to describe the fan theme. Data updated <span id="upd"></span>. Code &amp; setup data in <a href="https://github.com/FZ-Omer/f1-25-setup-lab">the repo</a>.</div></footer>
 
 <script src="derive.js"></script>
-<script>
-const REPO = 'FZ-Omer/f1-25-setup-lab';
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const $ = s => document.querySelector(s);
-const LABEL = {
-  fw:['Front wing','0–50'], rw:['Rear wing','0–50'], don:['Diff on-throttle','%'], doff:['Diff off-throttle','%'],
-  fc:['Front camber','°'], rc:['Rear camber','°'], ft:['Front toe-out','°'], rt:['Rear toe-in','°'],
-  fs:['Front suspension','1–41'], rs:['Rear suspension','1–41'], farb:['Front anti-roll bar','1–21'], rarb:['Rear anti-roll bar','1–21'],
-  frh:['Front ride height','10–40'], rrh:['Rear ride height','40–100'], bb:['Front brake bias','%'], bp:['Brake pressure','%'],
-  tfr:['Front right','psi'], tfl:['Front left','psi'], trr:['Rear right','psi'], trl:['Rear left','psi'],
-};
-const GROUPS = [['Aerodynamics',['fw','rw']],['Transmission',['don','doff']],['Suspension geometry',['fc','rc','ft','rt']],
-  ['Suspension',['fs','rs','farb','rarb','frh','rrh']],['Brakes',['bb','bp']],['Tyres',['tfr','tfl','trr','trl']]];
-const ZONE = {fw:'z-fw',rw:'z-rw',don:'z-diff',doff:'z-diff',fc:'z-fsus',ft:'z-fsus',fs:'z-fsus',farb:'z-fsus',frh:'z-fsus',
-  rc:'z-rsus',rt:'z-rsus',rs:'z-rsus',rarb:'z-rsus',rrh:'z-rsus',bb:'z-brk',bp:'z-brk',tfr:'z-tfr',tfl:'z-tfl',trr:'z-trr',trl:'z-trl'};
-const OPTS = {
-  weather:[['dry','Dry'],['wet','Wet']],
-  session:[['quali','Qualifying'],['sprint','Sprint'],['race','Race']],
-  length:[['short','Short · 5 laps/25%'],['medium','Medium · 35/50%'],['full','Full · 100%']],
-  input:[['wheel','Wheel'],['controller','Controller']],
-};
-const SYMPTOMS = ['Understeer – entry','Understeer – mid-corner','Understeer – exit','Oversteer – entry','Oversteer – mid-corner','Oversteer – exit',
-  'Wheelspin / snap on throttle','Front lock-ups','Rear lock-ups','Unstable over kerbs','Bottoming / sparks','Slow on straights',
-  'Front tyre wear high','Rear tyre wear high','Uneven left/right wear','Tyres overheating'];
-
-let data, state = { track:'australia', weather:'dry', session:'quali', length:'full', input:'wheel' }, shown = {};
-const fmt = (k, x) => x.toFixed(RANGE[k][2]);
-
-function readHash(){
-  const [track, weather, session, length, input] = location.hash.slice(1).split('/');
-  if (data.tracks.some(t => t.id === track)) state.track = track;
-  for (const [k, v] of Object.entries({weather, session, length, input})) if (OPTS[k].some(o => o[0] === v)) state[k] = v;
-}
-const writeHash = () => history.replaceState(null, '', `#${state.track}/${state.weather}/${state.session}/${state.length}/${state.input}`);
-
-function buildControls(){
-  $('#tracks').innerHTML = data.tracks.map(t => `<button type="button" data-id="${t.id}" aria-pressed="false">${t.name}<small>${t.circuit}</small></button>`).join('');
-  $('#tracks').onclick = e => { const b = e.target.closest('button'); if (b) { state.track = b.dataset.id; update(); } };
-  for (const key of Object.keys(OPTS)) {
-    const fs = $(`#${key}Seg`);
-    fs.insertAdjacentHTML('beforeend', OPTS[key].map(([v, l]) =>
-      `<input type="radio" name="${key}" id="${key}-${v}" value="${v}"><label for="${key}-${v}">${l}</label>`).join(''));
-    fs.onchange = e => { state[key] = e.target.value; update(); };
-  }
-  $('#symp').insertAdjacentHTML('beforeend', SYMPTOMS.map((s, i) => `<input type="checkbox" id="s${i}" value="${s}"><label for="s${i}">${s}</label>`).join(''));
-  $('#symp').onchange = () => $('#fbSend').disabled = !document.querySelector('#symp input:checked');
-  $('#rules').innerHTML = Object.entries(RULES).map(([c, t]) => `<li><code>${c}</code> ${t}</li>`).join('');
-  $('#groups').innerHTML = GROUPS.map(([g, keys]) => `<div class="group"><h4>${g}</h4>${keys.map(k =>
-    `<div class="rowp" tabindex="0" data-k="${k}"><div class="n">${LABEL[k][0]}<small>${LABEL[k][1]}</small></div><div class="bar"><div class="fill"></div><div class="base"></div></div><div class="val">–</div><div class="tag"></div></div>`).join('')}</div>`).join('');
-  const hot = k => { document.querySelectorAll('.car .hot').forEach(z => z.classList.remove('hot')); if (k) document.getElementById(ZONE[k]).classList.add('hot'); };
-  $('#groups').addEventListener('pointerover', e => hot(e.target.closest('.rowp')?.dataset.k));
-  $('#groups').addEventListener('focusin', e => hot(e.target.closest('.rowp')?.dataset.k));
-  $('#groups').addEventListener('pointerleave', () => hot());
-}
-
-function tick(el, from, to, k){
-  if (reduce || from === undefined || from === to) { el.textContent = fmt(k, to); return; }
-  const t0 = performance.now(), d = 650;
-  const step = now => { const p = Math.min(1, (now - t0) / d), e = 1 - Math.pow(1 - p, 3);
-    el.textContent = fmt(k, from + (to - from) * e); if (p < 1) requestAnimationFrame(step); };
-  requestAnimationFrame(step);
-}
-
-function notes(r){
-  const n = [];
-  if (r.reverse) n.push(RULES.R8);
-  n.push(state.weather === 'wet' ? 'Wet base is its own published wet setup — not a modified dry one.' : 'Quali = the published baseline untouched; sprint/race variants add tyre-life and stability tweaks.');
-  if (state.session === 'sprint') n.push('Sprint weekend: parc fermé may lock your setup after practice (F1 25 rule not verified). If it does, run this Sprint setup for the Grand Prix too.');
-  if (state.session === 'race') n.push('Diff can be changed on track: as fuel burns off and the rears wear, raise off-throttle a few % to calm entry oversteer (Traxion).');
-  n.push('No ABS: locking fronts? Drop brake pressure 2–4% or move bias 1% rearward (Traxion). No TC: short-shift out of slow corners.');
-  if (state.input === 'controller') n.push('Controller: on-throttle 10 is the stability floor (F1Laps). If exits feel lazy, raise it in +5 steps.');
-  return n;
-}
-
-function update(){
-  writeHash();
-  document.body.classList.toggle('wet', state.weather === 'wet');
-  document.querySelectorAll('#tracks button').forEach(b => b.setAttribute('aria-pressed', b.dataset.id === state.track));
-  document.querySelector(`#tracks [data-id="${state.track}"]`).scrollIntoView({ block:'nearest', inline:'nearest', behavior: reduce ? 'auto' : 'smooth' });
-  for (const key of Object.keys(OPTS)) document.getElementById(`${key}-${state[key]}`).checked = true;
-  $('#lengthSeg').hidden = state.session !== 'race';
-
-  const r = derive(data, state.track, state), v = r.v;
-  $('#tName').textContent = r.track.name; $('#tCirc').textContent = r.track.circuit;
-  const df = v.fw + v.rw, dfl = df < 30 ? 'Low downforce' : df < 70 ? 'Medium downforce' : 'High downforce';
-  $('#carChips').innerHTML = `<span class="chip acc">${dfl}</span><span class="chip">Aero balance ${v.fw}/${v.rw}</span>${r.reverse ? '<span class="chip amber">Reverse · untested</span>' : ''}`;
-  document.querySelector('.flow').style.setProperty('--flow', (0.45 + df / 100 * 1.3).toFixed(2) + 's');
-  const sess = OPTS.session.find(o => o[0] === state.session)[1] + (state.session === 'race' ? ' · ' + OPTS.length.find(o => o[0] === state.length)[1] : '');
-  $('#sheetSub').textContent = `${r.track.name} · ${state.weather === 'dry' ? 'Dry' : 'Wet'} · ${sess} · ${state.input === 'wheel' ? 'Wheel' : 'Controller'} · No TC / No ABS`;
-  const nDer = Object.values(r.why).filter(w => !w.includes('TUNED')).length, tuned = Object.values(r.why).some(w => w.includes('TUNED'));
-  $('#sheetChips').innerHTML = `<span class="chip">${20 - Object.keys(r.why).length} base</span><span class="chip amber">${nDer} derived</span>${tuned ? '<span class="chip green">tuned by feedback</span>' : ''}`;
-
-  document.querySelectorAll('.rowp').forEach((row, i) => {
-    const k = row.dataset.k, [lo, hi] = RANGE[k], why = r.why[k] || [];
-    const pct = x => (x - lo) / (hi - lo);
-    row.querySelector('.fill').style.transitionDelay = reduce ? '0s' : i * 22 + 'ms';
-    row.querySelector('.fill').style.transform = `scaleX(${Math.max(0.015, pct(v[k]))})`;
-    row.querySelector('.base').style.left = `calc(${pct(r.base[k]) * 100}% - 1px)`;
-    tick(row.querySelector('.val'), shown[k], v[k], k);
-    row.classList.toggle('changed', why.length > 0 && !why.includes('TUNED'));
-    row.classList.toggle('tuned', why.includes('TUNED'));
-    row.querySelector('.tag').innerHTML = why.map(w => `<span class="chip ${w === 'TUNED' ? 'green' : 'amber'}" title="${RULES[w]}">${w}</span>`).join(' ');
-    row.title = why.length ? `Base ${fmt(k, r.base[k])} → ${fmt(k, v[k])}. ` + why.map(w => RULES[w]).join(' ') : `Published base value`;
-  });
-  shown = { ...v };
-  $('#lFW').textContent = `FW ${v.fw}`; $('#lRW').textContent = `RW ${v.rw}`;
-  $('#lFL').textContent = fmt('tfl', v.tfl); $('#lFR').textContent = fmt('tfr', v.tfr);
-  $('#lRL').textContent = fmt('trl', v.trl); $('#lRR').textContent = fmt('trr', v.trr);
-  for (const k of ['tfl','tfr','trl','trr']) { const [lo, hi] = RANGE[k], p = (v[k] - lo) / (hi - lo);
-    document.getElementById(ZONE[k]).style.setProperty('--heat', `hsl(${200 - p * 190} 85% 55%)`); }
-  const ul = $('#notes'); ul.innerHTML = notes(r).map((t, i) => `<li class="reveal" style="animation-delay:${i * 60}ms">${t}</li>`).join('');
-  $('#fbCtx').innerHTML = `<span class="chip acc">${r.track.name}</span><span class="chip">${state.weather}</span><span class="chip">${sess}</span><span class="chip">${state.input}</span>`;
-  window._current = r;
-}
-
-function setupLine(v){
-  return `FW ${v.fw} · RW ${v.rw} · Diff ${v.don}/${v.doff} · Camber ${fmt('fc',v.fc)}/${fmt('rc',v.rc)} · Toe ${fmt('ft',v.ft)}/${fmt('rt',v.rt)} · Susp ${v.fs}/${v.rs} · ARB ${v.farb}/${v.rarb} · RH ${v.frh}/${v.rrh} · Bias ${v.bb} · BP ${v.bp} · Tyres FR ${fmt('tfr',v.tfr)} FL ${fmt('tfl',v.tfl)} RR ${fmt('trr',v.trr)} RL ${fmt('trl',v.trl)}`;
-}
-
-$('#fbForm').onsubmit = e => {
-  e.preventDefault();
-  const r = window._current, sym = [...document.querySelectorAll('#symp input:checked')].map(i => i.value);
-  const sess = state.session === 'race' ? `Race ${state.length}` : state.session;
-  const title = `[Feedback] ${r.track.name} · ${state.weather} · ${sess} · ${state.input} — ${sym.join(', ')}`.slice(0, 240);
-  const body = [
-    '### Context', `- Track: ${r.track.name} (${state.weather})`, `- Session: ${sess}`, `- Input: ${state.input} · No TC / No ABS`,
-    `- Compound: ${$('#fbTyre').value} · Corners: ${$('#fbSpeed').value}`, `- Setup used: ${setupLine(r.v)}`,
-    '', '### Symptoms', ...sym.map(s => `- ${s}`), '', '### Where', $('#fbWhere').value || '—',
-    '', '### Best lap', $('#fbLap').value || '—', '', '### Notes', $('#fbNotes').value || '—', '',
-    `<!-- data ${JSON.stringify({ ...state, setup: r.v })} -->`,
-  ].join('\n');
-  open(`https://github.com/${REPO}/issues/new?labels=feedback&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`, '_blank', 'noopener');
-};
-
-function renderLog(){
-  const name = id => data.tracks.find(t => t.id === id)?.name || id;
-  $('#log').innerHTML = data.log.length ? data.log.slice().reverse().map(l => `<div class="entry reveal">
-      <div class="meta">${l.date} · <a href="https://github.com/${REPO}/issues/${l.issue}">#${l.issue}</a> · ${name(l.track)} · ${l.weather}</div>
-      <div><b>${l.symptom}</b> → ${l.fix}</div>
-      <div class="chips">${Object.entries(l.changes).map(([k, d]) => `<span class="chip green">${LABEL[k]?.[0] || k} ${d > 0 ? '+' : ''}${d}</span>`).join('')}</div></div>`).join('')
-    : '<div class="empty">No fixes yet — your first feedback lands here.</div>';
-  fetch(`https://api.github.com/repos/${REPO}/issues?labels=feedback&state=open&per_page=20`)
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(list => $('#pending').innerHTML = list.length ? list.map(i => `<div class="entry"><div class="meta">#${i.number} · ${i.created_at.slice(0, 10)}</div><a href="${i.html_url}">${i.title.replace(/</g, '&lt;')}</a></div>`).join('') : 'Nothing open — all feedback handled.')
-    .catch(() => $('#pending').textContent = "Couldn't reach GitHub right now.");
-}
-
-function intro(){
-  const L = $('#lights'), dots = L.querySelectorAll('i'), done = () => L.classList.add('gone');
-  L.onclick = done; L.onkeydown = e => (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') && done();
-  if (reduce) return done();
-  dots.forEach((d, i) => setTimeout(() => d.classList.add('on'), 250 + i * 260));
-  setTimeout(() => { dots.forEach(d => d.classList.remove('on')); L.querySelector('p').textContent = "AND AWAY WE GO"; }, 250 + 5 * 260 + 380);
-  setTimeout(done, 250 + 5 * 260 + 900);
-}
-
-intro();
-if (reduce) document.querySelector('svg.car').pauseAnimations();
-fetch('setups.json', { cache:'no-cache' }).then(r => r.json()).then(d => {
-  data = d; $('#upd').textContent = d.updated;
-  $('#stats').innerHTML = `<span><b>${d.tracks.length}</b> layouts</span><span><b>${d.tracks.length * 20}</b> setups</span><span><b>${d.log.length}</b> feedback fixes</span><span>No TC · No ABS</span>`;
-  readHash(); buildControls(); update(); renderLog();
-  addEventListener('hashchange', () => { readHash(); update(); });
-}).catch(() => { $('#groups').innerHTML = '<p class="empty">Could not load setups.json.</p>'; $('#lights').classList.add('gone'); });
-</script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
