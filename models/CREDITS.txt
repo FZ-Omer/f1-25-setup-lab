@@ -1,0 +1,6 @@
+car.glb
+  Source: "F1 2026 concept (polygon model)" by Qvist_Designs
+          https://sketchfab.com/3d-models/f1-2026-concept-polygon-model-ea3bde709b1e4dc9b0ec8557d106ed42
+  Licence: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+  Changes: re-oriented and scaled to metres, split into parts (body, floor, wings, suspension, tyres, rims),
+           simplified to ~270k triangles, quantised and meshopt-compressed. Paint is applied on the site.

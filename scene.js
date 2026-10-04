@@ -1,6 +1,9 @@
-// 3D garage: an original, generic open-wheel car built from primitives (no external models).
+// 3D garage. Car: "F1 2026 concept (polygon model)" by Qvist_Designs, CC BY 4.0 (models/CREDITS.txt),
+// split into parts offline. A simple car built from primitives stands in while it loads or if it can't.
 import * as THREE from 'three';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
+import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from './vendor/libs/meshopt_decoder.module.js';
 
 const SILVER = new THREE.Color('#c9ced6'), GRAPHITE = new THREE.Color('#1c1d22'), RED = new THREE.Color('#b8101c');
 const TEAL = new THREE.Color('#19d3c5'), RACE_RED = new THREE.Color('#ff2436');
@@ -49,8 +52,12 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
   scene.add(big);
 
   // ---------- car ----------
-  const car = buildCar();
+  let car = buildCar();
   scene.add(car.root);
+  new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('models/car.glb').then(g => {
+    const real = buildFromModel(g.scene, car);
+    scene.remove(car.root); car = real; scene.add(car.root); car.drawDecals();
+  }).catch(e => console.warn('car model failed, keeping the simple car', e));
 
   // ---------- airflow streaks + rain ----------
   const NS = mobile ? 130 : 260, streakPos = new Float32Array(NS * 6), streakSeed = [];
@@ -94,14 +101,14 @@ export function initScene({ canvas, reduce, mobile, getView, onFrame }) {
     // camera choreography: hero → inside the setup panel → low rear chase
     const hero = { el: 12, az: 38 + time * 5, dist: mobile ? 12 : 8.4, cx: W * (mobile ? 0.5 : 0.64), cy: H * (mobile ? 0.68 : 0.56) };
     const p = v.panel, ph = Math.max(160, p.height - 200), pw = Math.max(160, p.width - 40), tan = Math.tan(rad(camera.fov / 2));
-    const lab = { el: 70, az: 180, dist: Math.max(6.2 * H / ph, 2.9 * H / pw) / (2 * tan), cx: p.left + p.width / 2, cy: p.top + 160 + ph / 2 };
+    const lab = { el: 70, az: 180, dist: Math.max(6.4 * H / ph, 2.9 * H / pw) / (2 * tan), cx: p.left + p.width / 2, cy: p.top + 160 + ph / 2 };
     const out = { el: 7, az: 152 + time * 3, dist: mobile ? 13 : 9.5, cx: W * (mobile ? 0.5 : 0.7), cy: H * 0.55 };
     const mix = (x, y, t) => x + (y - x) * t, e = t => t * t * (3 - 2 * t);
     const a = e(v.a), b = e(v.b), target = {};
     for (const f of ['el', 'az', 'dist', 'cx', 'cy']) target[f] = mix(mix(hero[f], lab[f], a), out[f], b);
     cam = cam || { ...target };
     for (const f in target) cam[f] += (target[f] - cam[f]) * k;
-    const el = rad(cam.el), az = rad(cam.az), tgt = new THREE.Vector3(0, 0.45, 0.1);
+    const el = rad(cam.el), az = rad(cam.az), tgt = new THREE.Vector3(0, 0.45, 0.25);
     camera.position.set(tgt.x + cam.dist * Math.cos(el) * Math.sin(az), tgt.y + cam.dist * Math.sin(el), tgt.z + cam.dist * Math.cos(el) * Math.cos(az));
     camera.lookAt(tgt);
     camera.setViewOffset(W, H, W / 2 - cam.cx, H / 2 - cam.cy, W, H);
@@ -205,7 +212,7 @@ function buildCar() {
   const dark = new THREE.MeshStandardMaterial({ color: 0x050506, roughness: 0.8 });
   const glow = new THREE.MeshBasicMaterial({ color: TEAL });
   const zones = { fw: [], rw: [], fsus: [], rsus: [], brk: [], diff: [], tfl: [], tfr: [], trl: [], trr: [] };
-  const zmat = (z, base) => { const m = base.clone(); zones[z].push(m); return m; };
+  const zmat = (z, base) => { const m = base.clone(); m.emissiveIntensity = 0; zones[z].push(m); return m; };
 
   // floor (top-down planform) + underglow strips
   const floor = new THREE.ExtrudeGeometry(shape([['m', -0.35, 1.15], ['l', 0.35, 1.15], ['l', 0.8, 0.55], ['l', 0.8, -1.05], ['l', 0.55, -1.15], ['l', 0.5, -1.95],
@@ -276,5 +283,62 @@ function buildCar() {
   }
   anchors.fw = new THREE.Object3D(); anchors.fw.position.set(0, 0.25, 2.75);
   anchors.rw = new THREE.Object3D(); anchors.rw.position.set(0, 1.15, -2.6); body.add(anchors.fw, anchors.rw);
-  return { root, body, paint, glow, zones, frontFlaps, rearFlap, wheels, heat, anchors, rainLight, drawDecals };
+  return { root, body, paint, glow, zones, frontFlaps, rearFlap, wheels, heat, anchors, rainLight, drawDecals, dmat };
+}
+
+// Real model: meshes arrive named by part (body, floor, fw, rw, fsus, rsus, diff, tfl…, rim_tfl…).
+function buildFromModel(model, prev) {
+  const { wheels: W } = model.userData;
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const paint = prev.paint, glow = prev.glow;
+  const carbon = new THREE.MeshStandardMaterial({ color: 0x141518, roughness: 0.38, metalness: 0.3, side: THREE.DoubleSide });
+  const rubber = new THREE.MeshStandardMaterial({ color: 0x121214, roughness: 0.82, side: THREE.DoubleSide });
+  const rim = new THREE.MeshStandardMaterial({ color: 0x2a2c31, metalness: 0.85, roughness: 0.3, side: THREE.DoubleSide });
+  paint.side = THREE.DoubleSide;
+  const zones = { fw: [], rw: [], fsus: [], rsus: [], brk: [], diff: [], tfl: [], tfr: [], trl: [], trr: [] };
+  const zmat = (z, base) => { const m = base.clone(); m.emissiveIntensity = 0; zones[z].push(m); return m; };
+  const brk = zmat('brk', rim), mats = { body: paint, floor: carbon };
+  for (const z of ['fw', 'rw', 'fsus', 'rsus', 'diff']) mats[z] = zmat(z, carbon);
+  for (const t of ['tfl', 'tfr', 'trl', 'trr']) mats[t] = zmat(t, rubber);
+
+  const wheels = [], heat = {}, anchors = {}, spinOf = {};
+  for (const [id, w] of Object.entries(W)) {
+    const hub = new THREE.Group(); hub.position.set(w.xc, w.R, w.zc); root.add(hub);
+    const spin = new THREE.Group(); hub.add(spin); wheels.push(spin); spinOf[id] = spin;
+    const s = Math.sign(w.xc), ringMat = new THREE.MeshBasicMaterial({ color: 0x3399ff }); heat[id] = ringMat;
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(w.R * 0.8, 0.008, 6, 64).rotateY(Math.PI / 2), ringMat);
+    ring.position.x = s * (w.hw - 0.025); hub.add(ring);
+    anchors[id] = new THREE.Object3D(); anchors[id].position.set(w.xc + s * 0.42, w.R, w.zc); root.add(anchors[id]);
+  }
+  for (const m of [...model.children]) {
+    if (!m.isMesh) continue;
+    const name = m.name, wid = name.replace('rim_', '');
+    m.material = name.startsWith('rim_') ? brk : mats[name] || paint;
+    // keep each mesh's own node transform (it de-quantises the compressed positions)
+    if (spinOf[wid]) { const w = W[wid], off = new THREE.Group(); off.position.set(-w.xc, -w.R, -w.zc); off.add(m); spinOf[wid].add(off); } else body.add(m);
+  }
+  // floor glow strips, rain light and "44" decals sit on the real surfaces (found by ray casts)
+  for (const sx of [-1, 1]) body.add(box(0.015, 0.015, 2.0, sx * 0.68, 0.04, 0.1, glow));
+  root.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster(), hit = (o, d) => { ray.set(new THREE.Vector3(...o), new THREE.Vector3(...d)); return ray.intersectObjects(body.children, true)[0]; };
+  const rearZ = Math.min(W.trl.zc, W.trr.zc);
+  const back = hit([0, 0.32, rearZ - 3], [0, 0, 1]);
+  const rainLight = box(0.12, 0.05, 0.02, 0, 0.32, back ? back.point.z - 0.012 : rearZ - 0.7, new THREE.MeshBasicMaterial({ color: 0x330000 }));
+  body.add(rainLight);
+  const decal = (o, d, size, up) => {
+    const h = hit(o, d); if (!h) return;
+    const n = h.face.normal.clone().applyNormalMatrix(new THREE.Matrix3().getNormalMatrix(h.object.matrixWorld)).normalize();
+    if (n.dot(new THREE.Vector3(...d)) > 0) n.negate();
+    const u = new THREE.Vector3(...up).projectOnPlane(n).normalize(), r = new THREE.Vector3().crossVectors(u, n);
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(size, size / 2), prev.dmat);
+    p.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(r, u, n)); p.position.copy(h.point).addScaledVector(n, 0.004); body.add(p);
+  };
+  const FZ = W.tfl.zc;
+  root.updateMatrixWorld(true);
+  decal([0, 2, FZ - 0.25], [0, -1, 0], 0.34, [0, 0, 1]);                       // nose / chassis top
+  for (const sx of [-1, 1]) decal([sx * 3, 0.72, -0.55], [-sx, 0, 0], 0.46, [0, 1, 0]);   // engine cover sides
+  anchors.fw = new THREE.Object3D(); anchors.fw.position.set(0, 0.28, FZ + 0.95);
+  anchors.rw = new THREE.Object3D(); anchors.rw.position.set(0, 1.12, rearZ - 0.55); body.add(anchors.fw, anchors.rw);
+  const dummy = new THREE.Object3D();
+  return { root, body, paint, glow, zones, frontFlaps: dummy, rearFlap: dummy, wheels, heat, anchors, rainLight, drawDecals: prev.drawDecals, dmat: prev.dmat };
 }
